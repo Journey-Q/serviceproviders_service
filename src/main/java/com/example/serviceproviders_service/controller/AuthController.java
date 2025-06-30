@@ -6,12 +6,19 @@ import com.example.serviceproviders_service.dto.AuthResponse;
 import com.example.serviceproviders_service.dto.ServiceProviderLoginRequest;
 import com.example.serviceproviders_service.dto.ServiceProviderSignupRequest;
 import com.example.serviceproviders_service.entity.ServiceProvider;
+import com.example.serviceproviders_service.entity.ServiceProviderPrincipal;
 import com.example.serviceproviders_service.services.ServiceProviderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -22,41 +29,42 @@ public class AuthController {
     private final ServiceProviderService serviceProviderService;
 
     @PostMapping("/signup")
-    public ResponseEntity<?> signup(@RequestBody ServiceProviderSignupRequest request) {
+    public ResponseEntity<?> signup(@Valid @RequestBody ServiceProviderSignupRequest request, BindingResult bindingResult) {
         try {
-            // Basic validation
-            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiError("Username is required", HttpStatus.BAD_REQUEST.value()));
+            // Check for validation errors
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = new HashMap<>();
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errors.put(error.getField(), error.getDefaultMessage());
+                }
+                return ResponseEntity.badRequest().body(errors);
             }
 
-            if (request.getEmail() == null || request.getEmail().trim().isEmpty()) {
+            // Check for existing username
+            if (serviceProviderService.existsByUsername(request.getUsername())) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiError("Email is required", HttpStatus.BAD_REQUEST.value()));
+                        .body(new ApiError("Username already exists", HttpStatus.BAD_REQUEST.value()));
             }
 
-            if (request.getPassword() == null || request.getPassword().length() < 6) {
+            // Check for existing email
+            if (serviceProviderService.existsByEmail(request.getEmail())) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiError("Password must be at least 6 characters", HttpStatus.BAD_REQUEST.value()));
+                        .body(new ApiError("Email already exists", HttpStatus.BAD_REQUEST.value()));
             }
 
-            if (request.getServiceType() == null) {
+            // Check for existing business registration number
+            if (serviceProviderService.existsByBusinessRegistrationNumber(request.getBusinessRegistrationNumber())) {
                 return ResponseEntity.badRequest()
-                        .body(new ApiError("Service type is required", HttpStatus.BAD_REQUEST.value()));
-            }
-
-            if (request.getBusinessRegistrationNumber() == null || request.getBusinessRegistrationNumber().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiError("Business registration number is required", HttpStatus.BAD_REQUEST.value()));
+                        .body(new ApiError("Business registration number already exists", HttpStatus.BAD_REQUEST.value()));
             }
 
             AuthResponse response = serviceProviderService.signup(request);
 
-            if (response.getToken() != null) {
+            if (response != null) {
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.badRequest()
-                        .body(new ApiError(response.getMessage(), HttpStatus.BAD_REQUEST.value()));
+                        .body(new ApiError("Registration failed", HttpStatus.BAD_REQUEST.value()));
             }
 
         } catch (Exception e) {
@@ -66,26 +74,24 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody ServiceProviderLoginRequest request) {
+    public ResponseEntity<?> login(@Valid @RequestBody ServiceProviderLoginRequest request, BindingResult bindingResult) {
         try {
-            // Basic validation
-            if (request.getUsername() == null || request.getUsername().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiError("Username is required", HttpStatus.BAD_REQUEST.value()));
+            // Check for validation errors
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = new HashMap<>();
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errors.put(error.getField(), error.getDefaultMessage());
+                }
+                return ResponseEntity.badRequest().body(errors);
             }
 
-            if (request.getPassword() == null || request.getPassword().trim().isEmpty()) {
-                return ResponseEntity.badRequest()
-                        .body(new ApiError("Password is required", HttpStatus.BAD_REQUEST.value()));
-            }
+            AuthResponse response = serviceProviderService.verify(request);
 
-            AuthResponse response = serviceProviderService.login(request);
-
-            if (response.getToken() != null) {
+            if (response != null) {
                 return ResponseEntity.ok(response);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                        .body(new ApiError(response.getMessage(), HttpStatus.UNAUTHORIZED.value()));
+                        .body(new ApiError("Invalid username or password", HttpStatus.UNAUTHORIZED.value()));
             }
 
         } catch (Exception e) {
@@ -97,8 +103,23 @@ public class AuthController {
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Authentication authentication) {
         try {
-            ServiceProvider serviceProvider = (ServiceProvider) authentication.getPrincipal();
-            return ResponseEntity.ok(serviceProvider);
+            ServiceProviderPrincipal principal = (ServiceProviderPrincipal) authentication.getPrincipal();
+            ServiceProvider serviceProvider = principal.getServiceProvider();
+
+            // Create a response object without sensitive information
+            Map<String, Object> profileData = new HashMap<>();
+            profileData.put("id", serviceProvider.getId());
+            profileData.put("username", serviceProvider.getUsername());
+            profileData.put("email", serviceProvider.getEmail());
+            profileData.put("serviceType", serviceProvider.getServiceType().name());
+            profileData.put("businessRegistrationNumber", serviceProvider.getBusinessRegistrationNumber());
+            profileData.put("address", serviceProvider.getAddress());
+            profileData.put("contactNo", serviceProvider.getContactNo());
+            profileData.put("isApproved", serviceProvider.getIsApproved());
+            profileData.put("isActive", serviceProvider.getIsActive());
+            profileData.put("createdAt", serviceProvider.getCreatedAt());
+
+            return ResponseEntity.ok(profileData);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiError("Unauthorized", HttpStatus.UNAUTHORIZED.value()));

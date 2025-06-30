@@ -1,72 +1,56 @@
-
 // dto/AuthResponse.java
 package com.example.serviceproviders_service.dto;
 
-public class AuthResponse {
-    private String token;
-    private String username;
-    private String email;
-    private String serviceType;
-    private boolean isApproved;
-    private String message;
+import com.example.serviceproviders_service.entity.ServiceProvider;
 
-    // Constructor
-    public AuthResponse(String token, String username, String email, String serviceType, boolean isApproved, String message) {
-        this.token = token;
-        this.username = username;
-        this.email = email;
-        this.serviceType = serviceType;
-        this.isApproved = isApproved;
-        this.message = message;
+public class AuthResponse {
+    private String accessToken;
+    private String tokenType = "Bearer";
+    private Long expiresIn;
+    private ServiceProvider serviceProvider;
+
+    // Constructor with all parameters
+    public AuthResponse(String accessToken, String refreshToken, Long expiresIn, ServiceProvider serviceProvider) {
+        this.accessToken = accessToken;
+        this.expiresIn = expiresIn;
+        this.serviceProvider = serviceProvider;
+    }
+
+    // Default constructor
+    public AuthResponse() {
     }
 
     // Getter methods
-    public String getToken() {
-        return token;
+    public String getAccessToken() {
+        return accessToken;
     }
 
-    public String getUsername() {
-        return username;
+    public String getTokenType() {
+        return tokenType;
     }
 
-    public String getEmail() {
-        return email;
+    public Long getExpiresIn() {
+        return expiresIn;
     }
 
-    public String getServiceType() {
-        return serviceType;
-    }
-
-    public boolean isApproved() {
-        return isApproved;
-    }
-
-    public String getMessage() {
-        return message;
+    public ServiceProvider getServiceProvider() {
+        return serviceProvider;
     }
 
     // Setter methods
-    public void setToken(String token) {
-        this.token = token;
+    public void setAccessToken(String accessToken) {
+        this.accessToken = accessToken;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setTokenType(String tokenType) {
+        this.tokenType = tokenType;
     }
 
-    public void setEmail(String email) {
-        this.email = email;
+    public void setExpiresIn(Long expiresIn) {
+        this.expiresIn = expiresIn;
     }
 
-    public void setServiceType(String serviceType) {
-        this.serviceType = serviceType;
-    }
-
-    public void setApproved(boolean approved) {
-        isApproved = approved;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
+    public void setServiceProvider(ServiceProvider serviceProvider) {
+        this.serviceProvider = serviceProvider;
     }
 }

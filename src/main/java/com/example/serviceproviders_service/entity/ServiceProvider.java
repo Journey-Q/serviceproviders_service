@@ -4,19 +4,14 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.CreationTimestamp;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
 
 @Entity
 @Table(name = "service_providers")
 @Getter
 @Setter
-public class ServiceProvider implements UserDetails {
+public class ServiceProvider {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -45,7 +40,7 @@ public class ServiceProvider implements UserDetails {
     private String contactNo;
 
     @Column(name = "is_approved")
-    private Boolean isApproved = false;
+    private Boolean isApproved = true;
 
     @Column(name = "created_at")
     @CreationTimestamp
@@ -87,42 +82,6 @@ public class ServiceProvider implements UserDetails {
         this.businessRegistrationNumber = businessRegistrationNumber;
         this.address = address;
         this.contactNo = contactNo;
-    }
-
-    // UserDetails implementation methods
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return Collections.singletonList(new SimpleGrantedAuthority("ROLE_" + serviceType.name()));
-    }
-
-    @Override
-    public String getPassword() {
-        return password;
-    }
-
-    @Override
-    public String getUsername() {
-        return username;
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return isActive != null ? isActive : true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return isActive != null ? isActive && (isApproved != null ? isApproved : false) : false;
     }
 
     @Override

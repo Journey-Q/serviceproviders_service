@@ -19,6 +19,12 @@ public class ApiError {
         this.timestamp = timestamp;
     }
 
+    public ApiError(int value, String badRequest, String message, String requestURI) {
+        this.status = value;
+        this.message = badRequest + ": " + message + " at " + requestURI;
+        this.timestamp = System.currentTimeMillis();
+    }
+
     // Getter methods
     public String getMessage() {
         return message;
