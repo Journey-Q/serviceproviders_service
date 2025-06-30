@@ -1,0 +1,47 @@
+// dto/ApiError.java
+package com.example.serviceproviders_service.dto;
+
+public class ApiError {
+    private String message;
+    private int status;
+    private long timestamp;
+
+    // Constructors
+    public ApiError(String message, int status) {
+        this.message = message;
+        this.status = status;
+        this.timestamp = System.currentTimeMillis();
+    }
+
+    public ApiError(String message, int status, long timestamp) {
+        this.message = message;
+        this.status = status;
+        this.timestamp = timestamp;
+    }
+
+    // Getter methods
+    public String getMessage() {
+        return message;
+    }
+
+    public int getStatus() {
+        return status;
+    }
+
+    public long getTimestamp() {
+        return timestamp;
+    }
+
+    // Setter methods
+    public void setMessage(String message) {
+        this.message = message;
+    }
+
+    public void setStatus(int status) {
+        this.status = status;
+    }
+
+    public void setTimestamp(long timestamp) {
+        this.timestamp = timestamp;
+    }
+}
