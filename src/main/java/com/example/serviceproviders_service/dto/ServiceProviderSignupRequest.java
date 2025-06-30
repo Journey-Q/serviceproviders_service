@@ -94,3 +94,4 @@ public class ServiceProviderSignupRequest {
         this.contactNo = contactNo;
     }
 }
+
