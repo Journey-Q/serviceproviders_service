@@ -31,8 +31,16 @@ public class SecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        // Public endpoints
                         .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/test").permitAll()
+                        .requestMatchers("/api/admin/login", "/api/admin/test", "/api/admin/setup").permitAll()
+
+                        // Service Provider endpoints
                         .requestMatchers("/api/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+
+                        // Admin endpoints
+                        .requestMatchers("/api/admin/profile", "/api/admin/**").hasRole("ADMIN")
+
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
