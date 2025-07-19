@@ -2,7 +2,7 @@
 package com.example.serviceproviders_service.config;
 
 import com.example.serviceproviders_service.services.JWTService;
-import com.example.serviceproviders_service.services.ServiceProviderUserDetailsService;
+import com.example.serviceproviders_service.services.ServiceProvider.ServiceProviderUserDetailsService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

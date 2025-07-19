@@ -1,12 +1,12 @@
 // services/ServiceProviderUserDetailsService.java
-package com.example.serviceproviders_service.services;
+package com.example.serviceproviders_service.services.ServiceProvider;
 
-import com.example.serviceproviders_service.entity.Admin;
-import com.example.serviceproviders_service.entity.AdminPrincipal;
-import com.example.serviceproviders_service.entity.ServiceProvider;
-import com.example.serviceproviders_service.entity.ServiceProviderPrincipal;
-import com.example.serviceproviders_service.repository.AdminRepo;
-import com.example.serviceproviders_service.repository.ServiceProviderRepo;
+import com.example.serviceproviders_service.entity.Admin.Admin;
+import com.example.serviceproviders_service.entity.Admin.AdminPrincipal;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProviderPrincipal;
+import com.example.serviceproviders_service.repository.Admin.AdminRepo;
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

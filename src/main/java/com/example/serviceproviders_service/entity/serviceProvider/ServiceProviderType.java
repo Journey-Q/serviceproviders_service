@@ -1,5 +1,5 @@
 // entity/ServiceProviderType.java
-package com.example.serviceproviders_service.entity;
+package com.example.serviceproviders_service.entity.serviceProvider;
 
 public enum ServiceProviderType {
     HOTEL,

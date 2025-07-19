@@ -1,4 +1,4 @@
-package com.example.serviceproviders_service.entity;
+package com.example.serviceproviders_service.entity.serviceProvider;
 
 import jakarta.persistence.*;
 import lombok.Getter;

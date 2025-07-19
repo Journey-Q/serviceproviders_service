@@ -1,13 +1,13 @@
 // controller/AdminController.java
-package com.example.serviceproviders_service.controller;
+package com.example.serviceproviders_service.controller.Admin;
 
-import com.example.serviceproviders_service.dto.AdminAuthResponse;
-import com.example.serviceproviders_service.dto.AdminLoginRequest;
+import com.example.serviceproviders_service.dto.Admin.AdminAuthResponse;
+import com.example.serviceproviders_service.dto.Admin.AdminLoginRequest;
 import com.example.serviceproviders_service.dto.ApiError;
-import com.example.serviceproviders_service.entity.Admin;
-import com.example.serviceproviders_service.entity.AdminPrincipal;
+import com.example.serviceproviders_service.entity.Admin.Admin;
+import com.example.serviceproviders_service.entity.Admin.AdminPrincipal;
 import com.example.serviceproviders_service.exception.BadRequestException;
-import com.example.serviceproviders_service.services.AdminService;
+import com.example.serviceproviders_service.services.Admin.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

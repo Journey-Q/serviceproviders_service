@@ -1,5 +1,5 @@
 // entity/AdminPrincipal.java
-package com.example.serviceproviders_service.entity;
+package com.example.serviceproviders_service.entity.Admin;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

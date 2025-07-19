@@ -1,7 +1,7 @@
 // repository/AdminRepo.java
-package com.example.serviceproviders_service.repository;
+package com.example.serviceproviders_service.repository.Admin;
 
-import com.example.serviceproviders_service.entity.Admin;
+import com.example.serviceproviders_service.entity.Admin.Admin;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

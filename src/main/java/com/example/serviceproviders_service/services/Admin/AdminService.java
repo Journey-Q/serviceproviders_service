@@ -1,12 +1,13 @@
 // services/AdminService.java
-package com.example.serviceproviders_service.services;
+package com.example.serviceproviders_service.services.Admin;
 
-import com.example.serviceproviders_service.dto.AdminAuthResponse;
-import com.example.serviceproviders_service.dto.AdminLoginRequest;
-import com.example.serviceproviders_service.entity.Admin;
-import com.example.serviceproviders_service.entity.AdminPrincipal;
+import com.example.serviceproviders_service.dto.Admin.AdminAuthResponse;
+import com.example.serviceproviders_service.dto.Admin.AdminLoginRequest;
+import com.example.serviceproviders_service.entity.Admin.Admin;
+import com.example.serviceproviders_service.entity.Admin.AdminPrincipal;
 import com.example.serviceproviders_service.exception.BadRequestException;
-import com.example.serviceproviders_service.repository.AdminRepo;
+import com.example.serviceproviders_service.repository.Admin.AdminRepo;
+import com.example.serviceproviders_service.services.JWTService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
