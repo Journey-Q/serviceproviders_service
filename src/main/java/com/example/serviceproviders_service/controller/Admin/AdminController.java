@@ -64,7 +64,7 @@ public class AdminController {
     }
 
     @PostMapping("/create")
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> createAdmin(@Valid @RequestBody AdminCreateRequest request,
                                          BindingResult bindingResult,
                                          Authentication authentication) {
@@ -125,7 +125,7 @@ public class AdminController {
     }
 
     @GetMapping("/all")
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllAdmins(Authentication authentication) {
         try {
             List<Admin> admins = adminService.getAllAdmins();
@@ -157,7 +157,7 @@ public class AdminController {
     }
 
     @PutMapping("/{id}/status")
-//    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> updateAdminStatus(@PathVariable Long id,
                                                @RequestBody Map<String, Boolean> statusRequest,
                                                Authentication authentication) {
