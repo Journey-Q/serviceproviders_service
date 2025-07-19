@@ -2,6 +2,7 @@
 package com.example.serviceproviders_service.services.Admin;
 
 import com.example.serviceproviders_service.dto.Admin.AdminAuthResponse;
+import com.example.serviceproviders_service.dto.Admin.AdminCreateRequest;
 import com.example.serviceproviders_service.dto.Admin.AdminLoginRequest;
 import com.example.serviceproviders_service.entity.Admin.Admin;
 import com.example.serviceproviders_service.entity.Admin.AdminPrincipal;
@@ -18,6 +19,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -66,6 +68,45 @@ public class AdminService {
         }
     }
 
+    @Transactional
+    public Admin createAdmin(AdminCreateRequest request) {
+        log.info("Creating new admin with email: {}", request.getEmail());
+
+        // Validate password confirmation
+        if (!request.isPasswordConfirmed()) {
+            throw new BadRequestException("Passwords do not match");
+        }
+
+        // Check if admin with same email exists
+        if (adminRepo.existsByEmail(request.getEmail())) {
+            throw new BadRequestException("Admin with this email already exists");
+        }
+
+        // Check if admin with same username exists
+        if (adminRepo.existsByUsername(request.getUsername())) {
+            throw new BadRequestException("Admin with this username already exists");
+        }
+
+        try {
+            // Create new admin entity
+            Admin admin = new Admin();
+            admin.setUsername(request.getUsername());
+            admin.setEmail(request.getEmail());
+            admin.setPassword(passwordEncoder.encode(request.getPassword()));
+            admin.setIsActive(request.getIsActive() != null ? request.getIsActive() : true);
+
+            // Save admin to database
+            Admin savedAdmin = adminRepo.save(admin);
+            log.info("Successfully created admin with ID: {}", savedAdmin.getId());
+
+            return savedAdmin;
+
+        } catch (Exception e) {
+            log.error("Error creating admin: {}", e.getMessage(), e);
+            throw new RuntimeException("Failed to create admin", e);
+        }
+    }
+
     public Admin findByEmail(String email) {
         return adminRepo.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Admin not found"));
@@ -87,5 +128,25 @@ public class AdminService {
             return adminRepo.save(admin);
         }
         return adminRepo.findByEmail("admin@serviceproviders.com").orElse(null);
+    }
+
+    // Get all admins (optional - for admin management)
+    public java.util.List<Admin> getAllAdmins() {
+        return adminRepo.findAll();
+    }
+
+    // Check if admin exists by ID
+    public boolean existsById(Long id) {
+        return adminRepo.existsById(id);
+    }
+
+    // Update admin status (activate/deactivate)
+    @Transactional
+    public Admin updateAdminStatus(Long id, Boolean isActive) {
+        Admin admin = adminRepo.findById(id)
+                .orElseThrow(() -> new BadRequestException("Admin not found"));
+
+        admin.setIsActive(isActive);
+        return adminRepo.save(admin);
     }
 }

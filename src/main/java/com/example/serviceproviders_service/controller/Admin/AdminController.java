@@ -2,6 +2,8 @@
 package com.example.serviceproviders_service.controller.Admin;
 
 import com.example.serviceproviders_service.dto.Admin.AdminAuthResponse;
+import com.example.serviceproviders_service.dto.Admin.AdminCreateRequest;
+import com.example.serviceproviders_service.dto.Admin.AdminCreateResponse;
 import com.example.serviceproviders_service.dto.Admin.AdminLoginRequest;
 import com.example.serviceproviders_service.dto.ApiError;
 import com.example.serviceproviders_service.entity.Admin.Admin;
@@ -10,8 +12,10 @@ import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.services.Admin.AdminService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
@@ -19,12 +23,15 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/admin/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
+@Slf4j
 public class AdminController {
 
     private final AdminService adminService;
@@ -56,6 +63,45 @@ public class AdminController {
         }
     }
 
+    @PostMapping("/create")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> createAdmin(@Valid @RequestBody AdminCreateRequest request,
+                                         BindingResult bindingResult,
+                                         Authentication authentication) {
+        try {
+            // Check for validation errors
+            if (bindingResult.hasErrors()) {
+                Map<String, String> errors = new HashMap<>();
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errors.put(error.getField(), error.getDefaultMessage());
+                }
+                return ResponseEntity.badRequest().body(errors);
+            }
+
+            // Log who is creating the admin
+            AdminPrincipal currentAdmin = (AdminPrincipal) authentication.getPrincipal();
+            log.info("Admin {} is creating a new admin with email: {}",
+                    currentAdmin.getEmail(), request.getEmail());
+
+            // Create the admin
+            Admin createdAdmin = adminService.createAdmin(request);
+
+            // Prepare response
+            AdminCreateResponse response = new AdminCreateResponse(createdAdmin, "Admin created successfully");
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiError(e.getMessage(), HttpStatus.BAD_REQUEST.value()));
+        } catch (Exception e) {
+            log.error("Error creating admin: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("Failed to create admin: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        }
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Authentication authentication) {
         try {
@@ -75,6 +121,81 @@ public class AdminController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(new ApiError("Unauthorized", HttpStatus.UNAUTHORIZED.value()));
+        }
+    }
+
+    @GetMapping("/all")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> getAllAdmins(Authentication authentication) {
+        try {
+            List<Admin> admins = adminService.getAllAdmins();
+
+            // Convert to response format without sensitive data
+            List<Map<String, Object>> adminList = admins.stream()
+                    .map(admin -> {
+                        Map<String, Object> adminData = new HashMap<>();
+                        adminData.put("id", admin.getId());
+                        adminData.put("username", admin.getUsername());
+                        adminData.put("email", admin.getEmail());
+                        adminData.put("role", admin.getRole());
+                        adminData.put("isActive", admin.getIsActive());
+                        adminData.put("createdAt", admin.getCreatedAt());
+                        return adminData;
+                    })
+                    .collect(Collectors.toList());
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("admins", adminList);
+            response.put("total", adminList.size());
+
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("Failed to retrieve admins: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
+        }
+    }
+
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> updateAdminStatus(@PathVariable Long id,
+                                               @RequestBody Map<String, Boolean> statusRequest,
+                                               Authentication authentication) {
+        try {
+            AdminPrincipal currentAdmin = (AdminPrincipal) authentication.getPrincipal();
+
+            // Prevent admin from deactivating themselves
+            if (currentAdmin.getId().equals(id) && !statusRequest.get("isActive")) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiError("Cannot deactivate your own account", HttpStatus.BAD_REQUEST.value()));
+            }
+
+            Boolean isActive = statusRequest.get("isActive");
+            if (isActive == null) {
+                return ResponseEntity.badRequest()
+                        .body(new ApiError("isActive field is required", HttpStatus.BAD_REQUEST.value()));
+            }
+
+            Admin updatedAdmin = adminService.updateAdminStatus(id, isActive);
+
+            Map<String, Object> response = new HashMap<>();
+            response.put("message", "Admin status updated successfully");
+            response.put("admin", Map.of(
+                    "id", updatedAdmin.getId(),
+                    "username", updatedAdmin.getUsername(),
+                    "email", updatedAdmin.getEmail(),
+                    "isActive", updatedAdmin.getIsActive()
+            ));
+
+            return ResponseEntity.ok(response);
+
+        } catch (BadRequestException e) {
+            return ResponseEntity.badRequest()
+                    .body(new ApiError(e.getMessage(), HttpStatus.BAD_REQUEST.value()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(new ApiError("Failed to update admin status: " + e.getMessage(),
+                            HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
 
