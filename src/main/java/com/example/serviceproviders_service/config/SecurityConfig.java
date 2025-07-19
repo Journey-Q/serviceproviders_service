@@ -1,7 +1,7 @@
 // config/SecurityConfig.java
 package com.example.serviceproviders_service.config;
 
-import com.example.serviceproviders_service.services.ServiceProviderUserDetailsService;
+import com.example.serviceproviders_service.services.ServiceProvider.ServiceProviderUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

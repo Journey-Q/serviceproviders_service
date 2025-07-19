@@ -1,7 +1,7 @@
 // dto/ServiceProviderSignupRequest.java
-package com.example.serviceproviders_service.dto;
+package com.example.serviceproviders_service.dto.ServiceProvider;
 
-import com.example.serviceproviders_service.entity.ServiceProviderType;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProviderType;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

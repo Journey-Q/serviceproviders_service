@@ -1,14 +1,15 @@
 // services/ServiceProviderService.java (with debug logging)
-package com.example.serviceproviders_service.services;
+package com.example.serviceproviders_service.services.ServiceProvider;
 
 import com.example.serviceproviders_service.config.AppConfig;
-import com.example.serviceproviders_service.dto.AuthResponse;
-import com.example.serviceproviders_service.dto.ServiceProviderLoginRequest;
-import com.example.serviceproviders_service.dto.ServiceProviderSignupRequest;
-import com.example.serviceproviders_service.entity.ServiceProvider;
-import com.example.serviceproviders_service.entity.ServiceProviderPrincipal;
+import com.example.serviceproviders_service.dto.ServiceProvider.AuthResponse;
+import com.example.serviceproviders_service.dto.ServiceProvider.ServiceProviderLoginRequest;
+import com.example.serviceproviders_service.dto.ServiceProvider.ServiceProviderSignupRequest;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProviderPrincipal;
 import com.example.serviceproviders_service.exception.BadRequestException;
-import com.example.serviceproviders_service.repository.ServiceProviderRepo;
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
+import com.example.serviceproviders_service.services.JWTService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;

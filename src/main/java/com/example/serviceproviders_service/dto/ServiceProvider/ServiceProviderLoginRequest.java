@@ -1,10 +1,10 @@
-// dto/AdminLoginRequest.java
-package com.example.serviceproviders_service.dto;
+// dto/ServiceProviderLoginRequest.java
+package com.example.serviceproviders_service.dto.ServiceProvider;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public class AdminLoginRequest {
+public class ServiceProviderLoginRequest {
 
     @NotBlank(message = "Email is required")
     @Email(message = "Email should be valid")

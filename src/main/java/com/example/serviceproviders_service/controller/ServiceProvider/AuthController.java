@@ -1,13 +1,13 @@
 // controller/AuthController.java
-package com.example.serviceproviders_service.controller;
+package com.example.serviceproviders_service.controller.ServiceProvider;
 
 import com.example.serviceproviders_service.dto.ApiError;
-import com.example.serviceproviders_service.dto.AuthResponse;
-import com.example.serviceproviders_service.dto.ServiceProviderLoginRequest;
-import com.example.serviceproviders_service.dto.ServiceProviderSignupRequest;
-import com.example.serviceproviders_service.entity.ServiceProvider;
-import com.example.serviceproviders_service.entity.ServiceProviderPrincipal;
-import com.example.serviceproviders_service.services.ServiceProviderService;
+import com.example.serviceproviders_service.dto.ServiceProvider.AuthResponse;
+import com.example.serviceproviders_service.dto.ServiceProvider.ServiceProviderLoginRequest;
+import com.example.serviceproviders_service.dto.ServiceProvider.ServiceProviderSignupRequest;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProviderPrincipal;
+import com.example.serviceproviders_service.services.ServiceProvider.ServiceProviderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

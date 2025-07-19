@@ -1,5 +1,5 @@
 // entity/ServiceProviderPrincipal.java
-package com.example.serviceproviders_service.entity;
+package com.example.serviceproviders_service.entity.serviceProvider;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;

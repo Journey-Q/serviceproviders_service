@@ -1,23 +1,24 @@
-// dto/AuthResponse.java
-package com.example.serviceproviders_service.dto;
 
-import com.example.serviceproviders_service.entity.ServiceProvider;
+// dto/AdminAuthResponse.java
+package com.example.serviceproviders_service.dto.Admin;
 
-public class AuthResponse {
+import com.example.serviceproviders_service.entity.Admin.Admin;
+
+public class AdminAuthResponse {
     private String accessToken;
     private String tokenType = "Bearer";
     private Long expiresIn;
-    private ServiceProvider serviceProvider;
+    private Admin admin;
 
     // Constructor with all parameters
-    public AuthResponse(String accessToken, String refreshToken, Long expiresIn, ServiceProvider serviceProvider) {
+    public AdminAuthResponse(String accessToken, String refreshToken, Long expiresIn, Admin admin) {
         this.accessToken = accessToken;
         this.expiresIn = expiresIn;
-        this.serviceProvider = serviceProvider;
+        this.admin = admin;
     }
 
     // Default constructor
-    public AuthResponse() {
+    public AdminAuthResponse() {
     }
 
     // Getter methods
@@ -33,8 +34,8 @@ public class AuthResponse {
         return expiresIn;
     }
 
-    public ServiceProvider getServiceProvider() {
-        return serviceProvider;
+    public Admin getAdmin() {
+        return admin;
     }
 
     // Setter methods
@@ -50,7 +51,7 @@ public class AuthResponse {
         this.expiresIn = expiresIn;
     }
 
-    public void setServiceProvider(ServiceProvider serviceProvider) {
-        this.serviceProvider = serviceProvider;
+    public void setAdmin(Admin admin) {
+        this.admin = admin;
     }
 }

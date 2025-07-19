@@ -1,8 +1,7 @@
 // repository/ServiceProviderRepo.java
-package com.example.serviceproviders_service.repository;
+package com.example.serviceproviders_service.repository.ServiceProvider;
 
-import com.example.serviceproviders_service.entity.ServiceProvider;
-import com.example.serviceproviders_service.entity.ServiceProvider;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

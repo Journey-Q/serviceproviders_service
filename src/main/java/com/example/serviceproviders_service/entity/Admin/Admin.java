@@ -1,5 +1,5 @@
 // entity/Admin.java
-package com.example.serviceproviders_service.entity;
+package com.example.serviceproviders_service.entity.Admin;
 
 import jakarta.persistence.*;
 import lombok.Getter;
