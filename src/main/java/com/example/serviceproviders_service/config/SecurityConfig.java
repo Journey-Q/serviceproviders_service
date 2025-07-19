@@ -32,14 +32,14 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/api/auth/signup", "/api/auth/login", "/api/auth/test").permitAll()
-                        .requestMatchers("/api/admin/login", "/api/admin/test", "/api/admin/setup").permitAll()
+                        .requestMatchers("/service/auth/signup", "/service/auth/login", "/service/auth/test").permitAll()
+                        .requestMatchers("/admin/auth/login", "/admin/auth/test", "/admin/auth/setup").permitAll()
 
                         // Service Provider endpoints
-                        .requestMatchers("/api/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
 
                         // Admin endpoints
-                        .requestMatchers("/api/admin/profile", "/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/admin/profile", "/admin/**").hasRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
