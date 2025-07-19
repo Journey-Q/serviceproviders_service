@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/admin")
+@RequestMapping("/admin/auth")
 @RequiredArgsConstructor
 @CrossOrigin(origins = "*")
 public class AdminController {
