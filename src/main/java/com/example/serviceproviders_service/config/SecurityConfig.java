@@ -46,7 +46,7 @@ public class SecurityConfig {
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
 
                         // Admin endpoints
-                        .requestMatchers("/admin/profile", "/admin/**").permitAll()
+                        .requestMatchers("/admin/profile", "/admin/**").hasAnyRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
