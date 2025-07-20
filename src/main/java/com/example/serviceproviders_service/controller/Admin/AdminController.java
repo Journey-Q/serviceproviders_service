@@ -1,15 +1,14 @@
 // controller/AdminController.java
 package com.example.serviceproviders_service.controller.Admin;
 
-import com.example.serviceproviders_service.dto.Admin.AdminAuthResponse;
-import com.example.serviceproviders_service.dto.Admin.AdminCreateRequest;
-import com.example.serviceproviders_service.dto.Admin.AdminCreateResponse;
-import com.example.serviceproviders_service.dto.Admin.AdminLoginRequest;
+import com.example.serviceproviders_service.dto.Admin.*;
 import com.example.serviceproviders_service.dto.ApiError;
+import com.example.serviceproviders_service.dto.ServiceProvider.AuthResponse;
 import com.example.serviceproviders_service.entity.Admin.Admin;
 import com.example.serviceproviders_service.entity.Admin.AdminPrincipal;
 import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.services.Admin.AdminService;
+import com.example.serviceproviders_service.services.Admin.ServiceProvidersService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +34,8 @@ import java.util.stream.Collectors;
 public class AdminController {
 
     private final AdminService adminService;
+
+    private final ServiceProvidersService serviceProvidersService;
 
     @PostMapping("/login")
     public ResponseEntity<?> login(@Valid @RequestBody AdminLoginRequest request, BindingResult bindingResult) {
@@ -225,4 +226,34 @@ public class AdminController {
                     .body(new ApiError("Setup failed: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR.value()));
         }
     }
+
+    @GetMapping("/all_service")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<AllServiceproviderResponse> getAllServiceProviders(Authentication authentication) {
+        AllServiceproviderResponse response = serviceProvidersService.getAllServiceProviders();
+        return ResponseEntity.ok(response);
+    }
+
+    @PutMapping("/providers/{providerId}/approve")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> approveService(@PathVariable Long providerId) {
+        boolean response = serviceProvidersService.approveServiceProvider(providerId);
+        if (response) {
+            return ResponseEntity.ok("Approved");
+        } else {
+            return ResponseEntity.badRequest().body("Failed to approve");
+        }
+    }
+    @PutMapping("/providers/{providerId}/reject")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<String> rejectService(@PathVariable Long providerId) {
+        boolean response = serviceProvidersService.disapproveServiceProvider(providerId);
+        if (response) {
+            return ResponseEntity.ok("Approved");
+        } else {
+            return ResponseEntity.badRequest().body("Failed to approve");
+        }
+    }
+
+
 }

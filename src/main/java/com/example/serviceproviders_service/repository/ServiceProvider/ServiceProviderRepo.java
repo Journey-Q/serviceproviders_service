@@ -13,6 +13,8 @@ public interface ServiceProviderRepo extends JpaRepository<ServiceProvider, Long
 
     Optional<ServiceProvider> findByUsername(String username);
 
+    List<ServiceProvider> findAll();
+
     Optional<ServiceProvider> findByEmail(String email);
 
     Optional<ServiceProvider> findByBusinessRegistrationNumber(String businessRegistrationNumber);
