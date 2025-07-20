@@ -40,7 +40,7 @@ public class ServiceProvider {
     private String contactNo;
 
     @Column(name = "is_approved")
-    private Boolean isApproved = true;
+    private Boolean isApproved = null;
 
     @Column(name = "created_at")
     @CreationTimestamp
@@ -59,7 +59,7 @@ public class ServiceProvider {
     public ServiceProvider() {
         this.createdAt = LocalDateTime.now();
         this.isActive = true;
-        this.isApproved = false;
+        this.isApproved = null;
     }
 
     // Constructor with basic parameters
