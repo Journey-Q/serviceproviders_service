@@ -2,11 +2,13 @@
 package com.example.serviceproviders_service.services.ServiceProvider;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.CreateAgencyProfileDTO;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
 import com.example.serviceproviders_service.entity.serviceProvider.TravelAgency.AgencyProfile;
 import com.example.serviceproviders_service.entity.serviceProvider.TravelAgency.AgencyInfo;
 import com.example.serviceproviders_service.entity.serviceProvider.TravelAgency.ContactInfo;
 import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.repository.ServiceProvider.AgencyProfileRepository;
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,6 +21,9 @@ public class AgencyProfileService {
 
     @Autowired
     private AgencyProfileRepository agencyProfileRepository;
+
+    @Autowired
+    private ServiceProviderRepo ServiceProviderRepo;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$");
 
@@ -73,6 +78,10 @@ public class AgencyProfileService {
                     dto.getContactInfo().getEmail()
             ));
         }
+
+
+        ServiceProvider agencyServiceProvider = ServiceProviderRepo.findById(dto.getServiceProviderId()).orElseThrow(()-> new BadRequestException("Service provider not found")) ;
+        agencyServiceProvider.setIsProfileCreated(true);
 
         return agencyProfileRepository.save(agencyProfile);
     }
