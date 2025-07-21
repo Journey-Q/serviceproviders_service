@@ -1,14 +1,17 @@
 package com.example.serviceproviders_service.services.ServiceProvider;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuideProfileDTO;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.ContactInfo;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.TourGuideProfile;
 import com.example.serviceproviders_service.exception.BadRequestException;
 
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
 import com.example.serviceproviders_service.repository.ServiceProvider.TourGuideProfileRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -20,6 +23,8 @@ public class TourGuideProfileService {
 
     private final TourGuideProfileRepository repository;
     private final Validator validator; // Bean validation
+    @Autowired
+    private ServiceProviderRepo ServiceProviderRepo;
 
     @Transactional
     public TourGuideProfile createProfile(TourGuideProfileDTO dto) {
@@ -39,6 +44,9 @@ public class TourGuideProfileService {
 
         TourGuideProfile profile = new TourGuideProfile();
         mapDtoToEntity(dto, profile);
+
+        ServiceProvider tourGuideServiceProvider = ServiceProviderRepo.findById(dto.getServiceProviderId()).orElseThrow(()-> new BadRequestException("Service provider not found")) ;
+        tourGuideServiceProvider.setIsProfileCreated(true);
         return repository.save(profile);
     }
 

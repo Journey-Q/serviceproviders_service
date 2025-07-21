@@ -4,8 +4,10 @@ import com.example.serviceproviders_service.dto.ServiceProvider.CreateHotelProfi
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.ContactInfo;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Coordinates;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.HotelProfile;
+import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
 import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.repository.ServiceProvider.HotelProfileRepository;
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -19,6 +21,9 @@ public class HotelProfileService {
 
     @Autowired
     private HotelProfileRepository hotelProfileRepository;
+
+    @Autowired
+    private ServiceProviderRepo ServiceProviderRepo;
 
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@([A-Za-z0-9.-]+\\.[A-Za-z]{2,})$");
 
@@ -95,6 +100,9 @@ public class HotelProfileService {
         } else {
             hotelProfile.setAmenities(List.of());
         }
+
+        ServiceProvider hotelServiceProvider = ServiceProviderRepo.findById(dto.getServiceProviderId()).orElseThrow(() -> new BadRequestException("Service provider not found"));
+        hotelServiceProvider.setIsProfileCreated(true);
 
         return hotelProfileRepository.save(hotelProfile);
     }

@@ -90,7 +90,21 @@ public class ServiceProviderService {
                 throw new BadRequestException("Email does not exist");
             }
 
-            // Email exists, now authenticate
+            // Get the service provider to check approval status
+            ServiceProvider serviceProvider = serviceProviderRepo.findByEmail(req.getEmail())
+                    .orElseThrow(() -> new BadRequestException("Email does not exist"));
+
+            // Check if service provider is approved
+            if (serviceProvider.getIsApproved() == null || !serviceProvider.getIsApproved()) {
+                throw new BadRequestException("Waiting for admin approval");
+            }
+
+            // Check if service provider is active
+            if (!serviceProvider.getIsActive()) {
+                throw new BadRequestException("Account is deactivated");
+            }
+
+            // Email exists and user is approved, now authenticate
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(req.getEmail(), req.getPassword())
             );
@@ -107,7 +121,7 @@ public class ServiceProviderService {
             return authResponse;
 
         } catch (BadRequestException e) {
-            throw e; // Re-throw email not found error
+            throw e; // Re-throw custom errors (email not found, not approved, etc.)
         } catch (BadCredentialsException e) {
             throw new BadCredentialsException("Incorrect password");
         } catch (UsernameNotFoundException e) {

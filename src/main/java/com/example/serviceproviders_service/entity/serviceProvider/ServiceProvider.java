@@ -55,6 +55,9 @@ public class ServiceProvider {
     @Column(name = "verification_expiration")
     private LocalDateTime verificationExpiration;
 
+    @Column(name = "is_profile_created")
+    private Boolean isProfileCreated = false;
+
     // Default constructor
     public ServiceProvider() {
         this.createdAt = LocalDateTime.now();
