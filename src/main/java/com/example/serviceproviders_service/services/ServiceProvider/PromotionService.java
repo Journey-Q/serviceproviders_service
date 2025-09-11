@@ -1,11 +1,11 @@
-package com.example.serviceproviders_service.services.ServiceProvider.Hotel;
+package com.example.serviceproviders_service.services.ServiceProvider;
 
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.CreatePromotionDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.PromotionResponseDTO;
-import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Promotion;
+import com.example.serviceproviders_service.dto.ServiceProvider.CreatePromotionDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionResponseDTO;
+import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
 import com.example.serviceproviders_service.exception.BadRequestException;
-import com.example.serviceproviders_service.repository.ServiceProvider.HotelProfileRepository;
-import com.example.serviceproviders_service.repository.ServiceProvider.Hotel.PromotionRepository;
+import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
+import com.example.serviceproviders_service.repository.ServiceProvider.PromotionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,15 +21,20 @@ public class PromotionService {
     private PromotionRepository promotionRepository;
 
     @Autowired
-    private HotelProfileRepository hotelProfileRepository;
+    private ServiceProviderRepo serviceProviderRepo;
+
+    // Service provider validation method (no service type restriction)
+    private void validateServiceProviderExists(Long serviceProviderId) {
+        serviceProviderRepo.findById(serviceProviderId)
+                .orElseThrow(() -> new BadRequestException("Service provider not found with id: " + serviceProviderId));
+    }
 
     @Transactional
     public PromotionResponseDTO createPromotion(CreatePromotionDTO dto) {
         validateCreatePromotionDTO(dto);
 
-        if (!hotelProfileRepository.existsById(dto.getServiceProviderId())) {
-            throw new BadRequestException("Service provider profile not found with id: " + dto.getServiceProviderId());
-        }
+        // Validate service provider exists (any type allowed)
+        validateServiceProviderExists(dto.getServiceProviderId());
 
         if (promotionRepository.existsByServiceProviderIdAndTitle(dto.getServiceProviderId(), dto.getTitle())) {
             throw new BadRequestException("Promotion with this title already exists for this service provider");
@@ -74,6 +79,10 @@ public class PromotionService {
         if (serviceProviderId == null || serviceProviderId <= 0) {
             throw new BadRequestException("Invalid service provider ID");
         }
+
+        // Validate service provider exists
+        validateServiceProviderExists(serviceProviderId);
+
         return promotionRepository.findByServiceProviderId(serviceProviderId)
                 .stream()
                 .map(PromotionResponseDTO::fromEntity)
@@ -88,6 +97,10 @@ public class PromotionService {
         if (status == null) {
             throw new BadRequestException("Promotion status is required");
         }
+
+        // Validate service provider exists
+        validateServiceProviderExists(serviceProviderId);
+
         return promotionRepository.findByServiceProviderIdAndStatus(serviceProviderId, status)
                 .stream()
                 .map(PromotionResponseDTO::fromEntity)
@@ -125,9 +138,11 @@ public class PromotionService {
         Promotion existingPromotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + id));
 
-        if (!hotelProfileRepository.existsById(dto.getServiceProviderId())) {
-            throw new BadRequestException("Service provider profile not found with id: " + dto.getServiceProviderId());
-        }
+        // Validate service provider exists (any type allowed)
+        validateServiceProviderExists(dto.getServiceProviderId());
+
+        // Additional security check: Ensure the existing promotion belongs to a valid service provider
+        validateServiceProviderExists(existingPromotion.getServiceProviderId());
 
         if (promotionRepository.existsByServiceProviderIdAndTitleAndIdNot(dto.getServiceProviderId(), dto.getTitle(), id)) {
             throw new BadRequestException("Promotion with this title already exists for this service provider");
@@ -163,6 +178,9 @@ public class PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + id));
 
+        // Validate that the promotion belongs to a valid service provider
+        validateServiceProviderExists(promotion.getServiceProviderId());
+
         promotion.setStatus(status);
         Promotion updatedPromotion = promotionRepository.save(promotion);
         return PromotionResponseDTO.fromEntity(updatedPromotion);
@@ -177,6 +195,9 @@ public class PromotionService {
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + id));
 
+        // Validate that the promotion belongs to a valid service provider
+        validateServiceProviderExists(promotion.getServiceProviderId());
+
         promotion.setIsActive(!promotion.getIsActive());
         Promotion updatedPromotion = promotionRepository.save(promotion);
         return PromotionResponseDTO.fromEntity(updatedPromotion);
@@ -189,6 +210,9 @@ public class PromotionService {
         }
         Promotion promotion = promotionRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + id));
+
+        // Validate that the promotion belongs to a valid service provider
+        validateServiceProviderExists(promotion.getServiceProviderId());
 
         // Don't allow deletion of currently advertised promotions
         if (promotion.getStatus() == Promotion.PromotionStatus.ADVERTISED) {

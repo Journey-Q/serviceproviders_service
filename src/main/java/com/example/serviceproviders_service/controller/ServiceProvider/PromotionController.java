@@ -1,9 +1,9 @@
-package com.example.serviceproviders_service.controller.ServiceProvider.Hotel;
+package com.example.serviceproviders_service.controller.ServiceProvider;
 
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.CreatePromotionDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.PromotionResponseDTO;
-import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Promotion;
-import com.example.serviceproviders_service.services.ServiceProvider.Hotel.PromotionService;
+import com.example.serviceproviders_service.dto.ServiceProvider.CreatePromotionDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionResponseDTO;
+import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
+import com.example.serviceproviders_service.services.ServiceProvider.PromotionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
