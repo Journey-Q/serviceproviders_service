@@ -1,6 +1,6 @@
-package com.example.serviceproviders_service.dto.ServiceProvider.Hotel;
+package com.example.serviceproviders_service.dto.ServiceProvider;
 
-import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Promotion;
+import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
 import lombok.Getter;
 import lombok.Setter;
 

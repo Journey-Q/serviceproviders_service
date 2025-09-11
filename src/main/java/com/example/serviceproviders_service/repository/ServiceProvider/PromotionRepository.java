@@ -1,6 +1,6 @@
-package com.example.serviceproviders_service.repository.ServiceProvider.Hotel;
+package com.example.serviceproviders_service.repository.ServiceProvider;
 
-import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Promotion;
+import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;

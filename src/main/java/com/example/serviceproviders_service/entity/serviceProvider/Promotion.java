@@ -1,10 +1,9 @@
-package com.example.serviceproviders_service.entity.serviceProvider.Hotel;
+package com.example.serviceproviders_service.entity.serviceProvider;
 
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
