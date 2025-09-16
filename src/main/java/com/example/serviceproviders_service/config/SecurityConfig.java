@@ -42,8 +42,10 @@ public class SecurityConfig {
                         .requestMatchers("/service/auth/signup", "/service/auth/login", "/service/auth/test").permitAll()
                         .requestMatchers("/admin/auth/login", "/admin/auth/test", "/admin/auth/setup").permitAll()
 
+
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers("/service").permitAll()
 
                         // Admin endpoints
                         .requestMatchers("/admin/profile", "/admin/**").hasAnyRole("ADMIN")
