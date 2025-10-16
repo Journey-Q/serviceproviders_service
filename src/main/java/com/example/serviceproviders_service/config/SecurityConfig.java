@@ -45,13 +45,13 @@ public class SecurityConfig {
 
                         // Public endpoints - Room Booking (for customers/guests)
                         .requestMatchers(HttpMethod.POST, "/service/roombookings/create-with-payment").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/reference/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/session/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/reference/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/session/").permitAll()
 
                         // Public endpoints - Rooms (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/rooms/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/rooms/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/rooms/service-provider/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/rooms/service-provider/").permitAll()
 
                         // Hotel role endpoints - Room management
                         .requestMatchers(HttpMethod.POST, "/service/rooms/create").hasRole("HOTEL")
@@ -60,19 +60,19 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/service/rooms/*").hasRole("HOTEL")
 
                         // Webhook endpoints - Public (Stripe callbacks)
-                        .requestMatchers("/service/roombookings/webhook/**").permitAll()
+                        .requestMatchers("/service/roombookings/webhook/").permitAll()
 
                         // Authenticated user endpoints - Customers can view their own bookings
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/user/**").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/guest/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/user/").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/guest/").authenticated()
                         .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/cancel").authenticated()
 
                         // Hotel/Service Provider endpoints - Manage bookings
                         .requestMatchers(HttpMethod.GET, "/service/roombookings/all").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/service-provider/**").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/payments/**").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/revenue/**").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/count/**").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/service-provider/").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/payments/").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/revenue/").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/roombookings/count/").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/status").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/refund").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.POST, "/service/roombookings/create").hasRole("HOTEL")
@@ -83,7 +83,7 @@ public class SecurityConfig {
                         // Public endpoints - Tours (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/tours/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/tours/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/tours/service-provider/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tours/service-provider/").permitAll()
 
                         // Tour Guide role endpoints - Tour management
                         .requestMatchers(HttpMethod.POST, "/service/tours/create").hasRole("TOUR_GUIDE")
@@ -94,7 +94,7 @@ public class SecurityConfig {
                         // Public endpoints - Drivers (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/drivers/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/drivers/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/drivers/service-provider/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/drivers/service-provider/").permitAll()
 
                         // Travel Agent role endpoints - Driver management
                         .requestMatchers(HttpMethod.POST, "/service/drivers/create").hasRole("TRAVEL_AGENT")
@@ -106,7 +106,7 @@ public class SecurityConfig {
                         // Public endpoints - Vehicles (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/").permitAll()
 
                         // Travel Agent role endpoints - Vehicle management
                         .requestMatchers(HttpMethod.POST, "/service/vehicles/create").hasRole("TRAVEL_AGENT")
@@ -146,25 +146,20 @@ public class SecurityConfig {
                         // Public endpoints - Promotions (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/promotions/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/promotions/service-provider/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/promotions/service-provider/").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/status/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/active").permitAll()
 
 
                         // Public endpoints - Reviews (for browsing)
-//                        .requestMatchers(HttpMethod.GET, "/service/reviews/*").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/service/reviews/all").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/service/reviews/booking/*").permitAll()
-//                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/**").permitAll()
-                        // Anyone can create and manage reviews
-                        .requestMatchers(HttpMethod.POST, "/service/reviews/create").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/user/**").permitAll()
-                        .requestMatchers(HttpMethod.PUT, "/service/reviews/*").permitAll()
-                        .requestMatchers(HttpMethod.DELETE, "/service/reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/booking/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/").permitAll()
 
                         // Authenticated users - Create and manage their own reviews
                         .requestMatchers(HttpMethod.POST, "/service/reviews/create").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/user/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/user/").authenticated()
                         .requestMatchers(HttpMethod.PUT, "/service/reviews/*").authenticated()
                         .requestMatchers(HttpMethod.DELETE, "/service/reviews/*").authenticated()
 
@@ -178,7 +173,7 @@ public class SecurityConfig {
                         .requestMatchers("/service").permitAll()
 
                         // Admin endpoints
-                        .requestMatchers("/admin/profile", "/admin/**").hasAnyRole("ADMIN")
+                        .requestMatchers("/admin/profile", "/admin/").hasAnyRole("ADMIN")
 
                         .anyRequest().authenticated()
                 )
@@ -194,45 +189,13 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Allow specific origins (replace with your frontend URLs)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:3000",      // Local React development
-                "http://localhost:5173",      // Vite development server
-                "https://*.vercel.app",       // Vercel deployments
-                "https://*.netlify.app",      // Netlify deployments
-                "https://*.github.io",        // GitHub Pages
-                "*"                           // Allow all origins (use cautiously in production)
-        ));
-
-        // Allow specific HTTP methods
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
-
-        // Allow specific headers
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "X-Requested-With",
-                "Cache-Control"
-        ));
-
-        // Allow credentials (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
-
-        // Expose headers that the client can access
-        configuration.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Disposition"
-        ));
-
-        // How long the browser can cache preflight requests
-        configuration.setMaxAge(3600L);
-
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        // Add "Authorization" to allowed headers
+        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "Authorization"));
+        configuration.setExposedHeaders(List.of("x-auth-token"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
+        source.registerCorsConfiguration("/", configuration);
         return source;
     }
 
