@@ -47,7 +47,12 @@ public class RoomService {
         room.setBathrooms(dto.getBathrooms());
         room.setAmenities(dto.getAmenities());
         room.setStatus(dto.getStatus() != null ? dto.getStatus() : Room.RoomStatus.AVAILABLE);
-        room.setImage(dto.getImage());
+        room.setImages(dto.getImages());
+
+        // Validate that at least one image is provided
+        if (dto.getImages() == null || dto.getImages().isEmpty()) {
+            throw new BadRequestException("At least one room image is required");
+        }
 
         Room savedRoom = roomRepository.save(room);
         return RoomResponseDTO.fromEntity(savedRoom);
@@ -126,7 +131,7 @@ public class RoomService {
         existingRoom.setBathrooms(dto.getBathrooms());
         existingRoom.setAmenities(dto.getAmenities());
         existingRoom.setStatus(dto.getStatus() != null ? dto.getStatus() : existingRoom.getStatus());
-        existingRoom.setImage(dto.getImage());
+        existingRoom.setImages(dto.getImages());
 
         Room updatedRoom = roomRepository.save(existingRoom);
         return RoomResponseDTO.fromEntity(updatedRoom);
