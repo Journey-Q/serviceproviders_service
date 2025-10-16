@@ -47,7 +47,11 @@ public class Room {
     @Column(nullable = false)
     private RoomStatus status;
 
-    private String image;
+    // CHANGE: Replace single image with multiple images
+    @ElementCollection
+    @CollectionTable(name = "room_images", joinColumns = @JoinColumn(name = "room_id"))
+    @Column(name = "image_url")
+    private List<String> images;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;

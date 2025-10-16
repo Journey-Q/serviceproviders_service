@@ -21,7 +21,7 @@ public class RoomResponseDTO {
     private Integer bathrooms;
     private List<String> amenities;
     private Room.RoomStatus status;
-    private String image;
+    private List<String> images;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -39,7 +39,7 @@ public class RoomResponseDTO {
         dto.setBathrooms(room.getBathrooms());
         dto.setAmenities(room.getAmenities());
         dto.setStatus(room.getStatus());
-        dto.setImage(room.getImage());
+        dto.setImages(room.getImages());
         dto.setCreatedAt(room.getCreatedAt());
         dto.setUpdatedAt(room.getUpdatedAt());
         return dto;

@@ -20,7 +20,7 @@ public class CreateRoomDTO {
     private Integer bathrooms;
     private List<String> amenities;
     private Room.RoomStatus status;
-    private String image;
+    private List<String> images;
 
     public CreateRoomDTO() {}
 }
