@@ -189,43 +189,11 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Allow specific origins (replace with your frontend URLs)
-        configuration.setAllowedOriginPatterns(Arrays.asList(
-                "http://localhost:3000",      // Local React development
-                "http://localhost:5173",      // Vite development server
-                "https://*.vercel.app",       // Vercel deployments
-                "https://*.netlify.app",      // Netlify deployments
-                "https://*.github.io",        // GitHub Pages
-                "*"                           // Allow all origins (use cautiously in production)
-        ));
-
-        // Allow specific HTTP methods
-        configuration.setAllowedMethods(Arrays.asList(
-                "GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"
-        ));
-
-        // Allow specific headers
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "Accept",
-                "X-Requested-With",
-                "Cache-Control"
-        ));
-
-        // Allow credentials (cookies, authorization headers)
-        configuration.setAllowCredentials(true);
-
-        // Expose headers that the client can access
-        configuration.setExposedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Disposition"
-        ));
-
-        // How long the browser can cache preflight requests
-        configuration.setMaxAge(3600L);
-
+        configuration.setAllowedOrigins(List.of("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        // Add "Authorization" to allowed headers
+        configuration.setAllowedHeaders(Arrays.asList("authorization", "content-type", "x-auth-token", "Authorization"));
+        configuration.setExposedHeaders(List.of("x-auth-token"));
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;
