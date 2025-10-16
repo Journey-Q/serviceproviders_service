@@ -152,10 +152,15 @@ public class SecurityConfig {
 
 
                         // Public endpoints - Reviews (for browsing)
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/booking/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/**").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/service/reviews/*").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/service/reviews/all").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/service/reviews/booking/*").permitAll()
+//                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/**").permitAll()
+                        // Anyone can create and manage reviews
+                        .requestMatchers(HttpMethod.POST, "/service/reviews/create").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/user/**").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/service/reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/service/reviews/*").permitAll()
 
                         // Authenticated users - Create and manage their own reviews
                         .requestMatchers(HttpMethod.POST, "/service/reviews/create").authenticated()
