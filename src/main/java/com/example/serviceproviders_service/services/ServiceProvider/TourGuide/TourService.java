@@ -2,19 +2,24 @@ package com.example.serviceproviders_service.services.ServiceProvider.TourGuide;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.CreateTourDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourResponseDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.AddPastTourImagesDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.PastTourImageResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.ServiceProvider;
 import com.example.serviceproviders_service.entity.serviceProvider.ServiceProviderType;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.Tour;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.TourItinerary;
+import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.PastTourImage;
 import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.repository.ServiceProvider.ServiceProviderRepo;
 import com.example.serviceproviders_service.repository.ServiceProvider.TourGuide.TourItineraryRepository;
 import com.example.serviceproviders_service.repository.ServiceProvider.TourGuide.TourRepository;
+import com.example.serviceproviders_service.repository.ServiceProvider.TourGuide.PastTourImageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,6 +31,9 @@ public class TourService {
 
     @Autowired
     private TourItineraryRepository tourItineraryRepository;
+
+    @Autowired
+    private PastTourImageRepository pastTourImageRepository;
 
     @Autowired
     private ServiceProviderRepo serviceProviderRepo;
@@ -73,7 +81,7 @@ public class TourService {
         // Save itinerary items
         List<TourItinerary> itineraryItems = saveItineraryItems(savedTour.getId(), dto.getItinerary());
 
-        return TourResponseDTO.fromEntity(savedTour, itineraryItems);
+        return TourResponseDTO.fromEntity(savedTour, itineraryItems, List.of());
     }
 
     @Transactional(readOnly = true)
@@ -85,7 +93,9 @@ public class TourService {
                 .orElseThrow(() -> new BadRequestException("Tour not found with id: " + id));
 
         List<TourItinerary> itineraryItems = tourItineraryRepository.findByTourIdOrderByOrderIndex(id);
-        return TourResponseDTO.fromEntity(tour, itineraryItems);
+        List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(id);
+
+        return TourResponseDTO.fromEntity(tour, itineraryItems, pastTourImages);
     }
 
     @Transactional(readOnly = true)
@@ -94,7 +104,8 @@ public class TourService {
         return tours.stream()
                 .map(tour -> {
                     List<TourItinerary> itineraryItems = tourItineraryRepository.findByTourIdOrderByOrderIndex(tour.getId());
-                    return TourResponseDTO.fromEntity(tour, itineraryItems);
+                    List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(tour.getId());
+                    return TourResponseDTO.fromEntity(tour, itineraryItems, pastTourImages);
                 })
                 .collect(Collectors.toList());
     }
@@ -112,7 +123,8 @@ public class TourService {
         return tours.stream()
                 .map(tour -> {
                     List<TourItinerary> itineraryItems = tourItineraryRepository.findByTourIdOrderByOrderIndex(tour.getId());
-                    return TourResponseDTO.fromEntity(tour, itineraryItems);
+                    List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(tour.getId());
+                    return TourResponseDTO.fromEntity(tour, itineraryItems, pastTourImages);
                 })
                 .collect(Collectors.toList());
     }
@@ -133,7 +145,8 @@ public class TourService {
         return tours.stream()
                 .map(tour -> {
                     List<TourItinerary> itineraryItems = tourItineraryRepository.findByTourIdOrderByOrderIndex(tour.getId());
-                    return TourResponseDTO.fromEntity(tour, itineraryItems);
+                    List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(tour.getId());
+                    return TourResponseDTO.fromEntity(tour, itineraryItems, pastTourImages);
                 })
                 .collect(Collectors.toList());
     }
@@ -181,7 +194,10 @@ public class TourService {
         tourItineraryRepository.deleteByTourId(id);
         List<TourItinerary> itineraryItems = saveItineraryItems(id, dto.getItinerary());
 
-        return TourResponseDTO.fromEntity(updatedTour, itineraryItems);
+        // Get existing past tour images
+        List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(id);
+
+        return TourResponseDTO.fromEntity(updatedTour, itineraryItems, pastTourImages);
     }
 
     @Transactional
@@ -195,8 +211,12 @@ public class TourService {
         // Validate that the tour belongs to a tour guide service provider
         validateTourGuideAccess(tour.getServiceProviderId());
 
-        // Delete itinerary items first
+        // Delete past tour images first
+        pastTourImageRepository.deleteByTourId(id);
+
+        // Delete itinerary items
         tourItineraryRepository.deleteByTourId(id);
+
         tourRepository.delete(tour);
         return true;
     }
@@ -220,17 +240,146 @@ public class TourService {
         Tour updatedTour = tourRepository.save(tour);
 
         List<TourItinerary> itineraryItems = tourItineraryRepository.findByTourIdOrderByOrderIndex(id);
-        return TourResponseDTO.fromEntity(updatedTour, itineraryItems);
+        List<PastTourImage> pastTourImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(id);
+
+        return TourResponseDTO.fromEntity(updatedTour, itineraryItems, pastTourImages);
     }
+
+    // ==================== Past Tour Images Methods ====================
+
+    @Transactional
+    public List<PastTourImageResponseDTO> addPastTourImages(AddPastTourImagesDTO dto) {
+        if (dto == null || dto.getTourId() == null || dto.getTourId() <= 0) {
+            throw new BadRequestException("Invalid tour ID");
+        }
+
+        Tour tour = tourRepository.findById(dto.getTourId())
+                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + dto.getTourId()));
+
+        // Validate that the tour belongs to a tour guide service provider
+        validateTourGuideAccess(tour.getServiceProviderId());
+
+        if (dto.getImageUrls() == null || dto.getImageUrls().isEmpty()) {
+            throw new BadRequestException("At least one image URL is required");
+        }
+
+        // Get current max order index
+        List<PastTourImage> existingImages = pastTourImageRepository.findByTourIdOrderByOrderIndex(dto.getTourId());
+        int startingIndex = existingImages.isEmpty() ? 0 : existingImages.get(existingImages.size() - 1).getOrderIndex() + 1;
+
+        // Use traditional for loop to avoid "effectively final" lambda issues
+        List<PastTourImage> newImages = new ArrayList<>();
+        int currentIndex = startingIndex;
+
+        for (String imageUrl : dto.getImageUrls()) {
+            if (imageUrl == null || imageUrl.trim().isEmpty()) {
+                throw new BadRequestException("Image URL cannot be empty");
+            }
+            newImages.add(new PastTourImage(dto.getTourId(), imageUrl, currentIndex++));
+        }
+
+        List<PastTourImage> savedImages = pastTourImageRepository.saveAll(newImages);
+
+        return savedImages.stream()
+                .map(PastTourImageResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<PastTourImageResponseDTO> getPastTourImages(Long tourId) {
+        if (tourId == null || tourId <= 0) {
+            throw new BadRequestException("Invalid tour ID");
+        }
+
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + tourId));
+
+        List<PastTourImage> images = pastTourImageRepository.findByTourIdOrderByOrderIndex(tourId);
+
+        return images.stream()
+                .map(PastTourImageResponseDTO::fromEntity)
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public PastTourImageResponseDTO updatePastTourImage(Long imageId, String newImageUrl) {
+        if (imageId == null || imageId <= 0) {
+            throw new BadRequestException("Invalid image ID");
+        }
+        if (newImageUrl == null || newImageUrl.trim().isEmpty()) {
+            throw new BadRequestException("Image URL cannot be empty");
+        }
+
+        PastTourImage image = pastTourImageRepository.findById(imageId)
+                .orElseThrow(() -> new BadRequestException("Image not found with id: " + imageId));
+
+        Tour tour = tourRepository.findById(image.getTourId())
+                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + image.getTourId()));
+
+        // Validate that the tour belongs to a tour guide service provider
+        validateTourGuideAccess(tour.getServiceProviderId());
+
+        image.setImageUrl(newImageUrl);
+        PastTourImage updatedImage = pastTourImageRepository.save(image);
+
+        return PastTourImageResponseDTO.fromEntity(updatedImage);
+    }
+
+    @Transactional
+    public void deletePastTourImage(Long imageId) {
+        if (imageId == null || imageId <= 0) {
+            throw new BadRequestException("Invalid image ID");
+        }
+
+        PastTourImage image = pastTourImageRepository.findById(imageId)
+                .orElseThrow(() -> new BadRequestException("Image not found with id: " + imageId));
+
+        Tour tour = tourRepository.findById(image.getTourId())
+                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + image.getTourId()));
+
+        // Validate that the tour belongs to a tour guide service provider
+        validateTourGuideAccess(tour.getServiceProviderId());
+
+        pastTourImageRepository.delete(image);
+    }
+
+    @Transactional
+    public void deletePastTourImagesByTourId(Long tourId) {
+        if (tourId == null || tourId <= 0) {
+            throw new BadRequestException("Invalid tour ID");
+        }
+
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + tourId));
+
+        // Validate that the tour belongs to a tour guide service provider
+        validateTourGuideAccess(tour.getServiceProviderId());
+
+        pastTourImageRepository.deleteByTourId(tourId);
+    }
+
+    @Transactional(readOnly = true)
+    public long getPastTourImagesCount(Long tourId) {
+        if (tourId == null || tourId <= 0) {
+            throw new BadRequestException("Invalid tour ID");
+        }
+
+        return pastTourImageRepository.countByTourId(tourId);
+    }
+
+    // ==================== Private Helper Methods ====================
 
     private List<TourItinerary> saveItineraryItems(Long tourId, List<CreateTourDTO.ItineraryItemDTO> itineraryDTOs) {
         if (itineraryDTOs == null || itineraryDTOs.isEmpty()) {
             return List.of();
         }
 
-        List<TourItinerary> itineraryItems = itineraryDTOs.stream()
-                .map(dto -> new TourItinerary(tourId, dto.getTime(), dto.getActivity(), itineraryDTOs.indexOf(dto)))
-                .collect(Collectors.toList());
+        List<TourItinerary> itineraryItems = new ArrayList<>();
+        int orderIndex = 0;
+
+        for (CreateTourDTO.ItineraryItemDTO dto : itineraryDTOs) {
+            itineraryItems.add(new TourItinerary(tourId, dto.getTime(), dto.getActivity(), orderIndex++));
+        }
 
         return tourItineraryRepository.saveAll(itineraryItems);
     }
