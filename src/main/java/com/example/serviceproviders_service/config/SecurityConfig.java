@@ -194,6 +194,32 @@ public class SecurityConfig {
                         // Get tour booking by ID - Authenticated (with service-level authorization)
                         .requestMatchers(HttpMethod.GET, "/service/tourbookings/*").authenticated()
 
+                        // Public endpoints - Vehicle Booking (for customers/guests)
+                        .requestMatchers(HttpMethod.POST, "/service/vehiclebookings/create-with-payment").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/reference/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/session/*").permitAll()
+
+                        // Webhook endpoints - Public (Stripe callbacks for vehicle bookings)
+                        .requestMatchers("/service/vehiclebookings/webhook/*").permitAll()
+
+                        // Authenticated user endpoints - Customers can view their own vehicle bookings
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/user/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/customer/*").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/cancel").authenticated()
+
+                        // Travel Agent/Service Provider endpoints - Manage vehicle bookings
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/all").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/service-provider/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/payments/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/revenue/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/count/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/status").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/refund").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.POST, "/service/vehiclebookings/create").hasRole("TRAVEL_AGENT")
+
+                        // Get vehicle booking by ID - Authenticated (with service-level authorization)
+                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/*").authenticated()
+
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
                         .requestMatchers("/service").permitAll()
