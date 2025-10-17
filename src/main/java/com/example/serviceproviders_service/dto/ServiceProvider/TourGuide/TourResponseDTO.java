@@ -2,6 +2,7 @@ package com.example.serviceproviders_service.dto.ServiceProvider.TourGuide;
 
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.Tour;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.TourItinerary;
+import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.PastTourImage;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -31,6 +32,7 @@ public class TourResponseDTO {
     private List<String> included;
     private List<String> importantNotes;
     private List<ItineraryItemDTO> itinerary;
+    private List<PastTourImageResponseDTO> pastTourImages;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -50,7 +52,7 @@ public class TourResponseDTO {
 
     public TourResponseDTO() {}
 
-    public static TourResponseDTO fromEntity(Tour tour, List<TourItinerary> itineraryItems) {
+    public static TourResponseDTO fromEntity(Tour tour, List<TourItinerary> itineraryItems, List<PastTourImage> pastTourImages) {
         TourResponseDTO dto = new TourResponseDTO();
         dto.setId(tour.getId());
         dto.setServiceProviderId(tour.getServiceProviderId());
@@ -81,6 +83,19 @@ public class TourResponseDTO {
             dto.setItinerary(itineraryDTOs);
         }
 
+        // Convert past tour images
+        if (pastTourImages != null) {
+            List<PastTourImageResponseDTO> pastImageDTOs = pastTourImages.stream()
+                    .map(PastTourImageResponseDTO::fromEntity)
+                    .toList();
+            dto.setPastTourImages(pastImageDTOs);
+        }
+
         return dto;
+    }
+
+    // Overload method for backward compatibility
+    public static TourResponseDTO fromEntity(Tour tour, List<TourItinerary> itineraryItems) {
+        return fromEntity(tour, itineraryItems, null);
     }
 }

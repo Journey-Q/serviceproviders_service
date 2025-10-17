@@ -2,6 +2,8 @@ package com.example.serviceproviders_service.controller.ServiceProvider.TourGuid
 
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.CreateTourDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourResponseDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.AddPastTourImagesDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.PastTourImageResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.Tour;
 import com.example.serviceproviders_service.services.ServiceProvider.TourGuide.TourService;
 import org.springframework.http.HttpStatus;
@@ -20,6 +22,8 @@ public class TourController {
     public TourController(TourService tourService) {
         this.tourService = tourService;
     }
+
+    // ==================== Tour Management Endpoints ====================
 
     @PostMapping("/create")
     public ResponseEntity<TourResponseDTO> createTour(@RequestBody CreateTourDTO dto) {
@@ -76,5 +80,48 @@ public class TourController {
             return ResponseEntity.ok("Tour deleted successfully");
         }
         return ResponseEntity.noContent().build();
+    }
+
+    // ==================== Past Tour Images Endpoints ====================
+
+    @PostMapping("/{tourId}/past-images")
+    public ResponseEntity<List<PastTourImageResponseDTO>> addPastTourImages(
+            @PathVariable Long tourId,
+            @RequestBody AddPastTourImagesDTO dto) {
+        dto.setTourId(tourId);
+        List<PastTourImageResponseDTO> images = tourService.addPastTourImages(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(images);
+    }
+
+    @GetMapping("/{tourId}/past-images")
+    public ResponseEntity<List<PastTourImageResponseDTO>> getPastTourImages(@PathVariable Long tourId) {
+        List<PastTourImageResponseDTO> images = tourService.getPastTourImages(tourId);
+        return ResponseEntity.ok(images);
+    }
+
+    @PutMapping("/past-images/{imageId}")
+    public ResponseEntity<PastTourImageResponseDTO> updatePastTourImage(
+            @PathVariable Long imageId,
+            @RequestParam String imageUrl) {
+        PastTourImageResponseDTO updatedImage = tourService.updatePastTourImage(imageId, imageUrl);
+        return ResponseEntity.ok(updatedImage);
+    }
+
+    @DeleteMapping("/past-images/{imageId}")
+    public ResponseEntity<String> deletePastTourImage(@PathVariable Long imageId) {
+        tourService.deletePastTourImage(imageId);
+        return ResponseEntity.ok("Past tour image deleted successfully");
+    }
+
+    @DeleteMapping("/{tourId}/past-images")
+    public ResponseEntity<String> deletePastTourImagesByTourId(@PathVariable Long tourId) {
+        tourService.deletePastTourImagesByTourId(tourId);
+        return ResponseEntity.ok("All past tour images for this tour deleted successfully");
+    }
+
+    @GetMapping("/{tourId}/past-images/count")
+    public ResponseEntity<Long> getPastTourImagesCount(@PathVariable Long tourId) {
+        long count = tourService.getPastTourImagesCount(tourId);
+        return ResponseEntity.ok(count);
     }
 }
