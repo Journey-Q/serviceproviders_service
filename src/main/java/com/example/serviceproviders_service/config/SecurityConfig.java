@@ -168,6 +168,32 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/reviews/*/verification").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT", "ADMIN")
 
 
+                        // Public endpoints - Tour Booking (for customers/guests)
+                        .requestMatchers(HttpMethod.POST, "/service/tourbookings/create-with-payment").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/reference/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/session/*").permitAll()
+
+                        // Webhook endpoints - Public (Stripe callbacks for tour bookings)
+                        .requestMatchers("/service/tourbookings/webhook/*").permitAll()
+
+                        // Authenticated user endpoints - Customers can view their own tour bookings
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/user/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/customer/*").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/cancel").authenticated()
+
+                        // Tour Guide/Service Provider endpoints - Manage tour bookings
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/all").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/service-provider/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/payments/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/revenue/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/count/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/status").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/refund").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.POST, "/service/tourbookings/create").hasRole("TOUR_GUIDE")
+
+                        // Get tour booking by ID - Authenticated (with service-level authorization)
+                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/*").authenticated()
+
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
                         .requestMatchers("/service").permitAll()
