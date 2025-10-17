@@ -220,6 +220,13 @@ public class SecurityConfig {
                         // Get vehicle booking by ID - Authenticated (with service-level authorization)
                         .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/*").authenticated()
 
+                        // Unified Booking History endpoints - Authenticated users can view their own booking history
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/hotels").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/tours").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/vehicles").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/count").authenticated()
+
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
                         .requestMatchers("/service").permitAll()
