@@ -2,6 +2,7 @@ package com.example.serviceproviders_service.services.ServiceProvider.Hotel;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.CreateRoomDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomResponseDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.UpdateRoomDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Room;
 import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.repository.ServiceProvider.HotelProfileRepository;
@@ -102,27 +103,24 @@ public class RoomService {
     }
 
     @Transactional
-    public RoomResponseDTO updateRoom(Long id, CreateRoomDTO dto) {
+    public RoomResponseDTO updateRoom(Long id, UpdateRoomDTO dto) {
         if (id == null || id <= 0) {
             throw new BadRequestException("Invalid room ID");
         }
 
-        validateCreateRoomDTO(dto);
+        validateUpdateRoomDTO(dto);
 
         Room existingRoom = roomRepository.findById(id)
                 .orElseThrow(() -> new BadRequestException("Room not found with id: " + id));
 
-        if (!hotelProfileRepository.existsById(dto.getServiceProviderId())) {
-            throw new BadRequestException("Service provider profile not found with id: " + dto.getServiceProviderId());
-        }
-
-        if (roomRepository.existsByServiceProviderIdAndNameAndIdNot(dto.getServiceProviderId(), dto.getName(), id)) {
+        // Check if room name already exists for this service provider (excluding current room)
+        if (roomRepository.existsByServiceProviderIdAndNameAndIdNot(existingRoom.getServiceProviderId(), dto.getName(), id)) {
             throw new BadRequestException("Room with this name already exists for this service provider");
         }
 
         String bedDescription = createBedDescription(dto.getNumberOfBeds(), dto.getBedType());
 
-        existingRoom.setServiceProviderId(dto.getServiceProviderId());
+        // Keep the existing serviceProviderId - don't allow it to be changed during update
         existingRoom.setName(dto.getName());
         existingRoom.setPrice(dto.getPrice());
         existingRoom.setMaxOccupancy(dto.getMaxOccupancy());
@@ -172,6 +170,45 @@ public class RoomService {
         }
         if (dto.getServiceProviderId() == null || dto.getServiceProviderId() <= 0) {
             throw new BadRequestException("Service Provider ID is required and must be positive");
+        }
+        if (dto.getName() == null || dto.getName().trim().isEmpty()) {
+            throw new BadRequestException("Room name is required");
+        }
+        if (dto.getName().length() > 100) {
+            throw new BadRequestException("Room name cannot exceed 100 characters");
+        }
+        if (dto.getPrice() == null || dto.getPrice().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BadRequestException("Price must be positive");
+        }
+        if (dto.getMaxOccupancy() == null || dto.getMaxOccupancy() <= 0) {
+            throw new BadRequestException("Maximum occupancy must be positive");
+        }
+        if (dto.getMaxOccupancy() > 10) {
+            throw new BadRequestException("Maximum occupancy cannot exceed 10");
+        }
+        if (dto.getArea() == null || dto.getArea() <= 0) {
+            throw new BadRequestException("Room area must be positive");
+        }
+        if (dto.getBedType() == null || dto.getBedType().trim().isEmpty()) {
+            throw new BadRequestException("Bed type is required");
+        }
+        if (dto.getNumberOfBeds() == null || dto.getNumberOfBeds() <= 0) {
+            throw new BadRequestException("Number of beds must be positive");
+        }
+        if (dto.getNumberOfBeds() > 4) {
+            throw new BadRequestException("Number of beds cannot exceed 4");
+        }
+        if (dto.getBathrooms() == null || dto.getBathrooms() <= 0) {
+            throw new BadRequestException("Number of bathrooms must be positive");
+        }
+        if (dto.getBathrooms() > 5) {
+            throw new BadRequestException("Number of bathrooms cannot exceed 5");
+        }
+    }
+
+    private void validateUpdateRoomDTO(UpdateRoomDTO dto) {
+        if (dto == null) {
+            throw new BadRequestException("Room data cannot be null");
         }
         if (dto.getName() == null || dto.getName().trim().isEmpty()) {
             throw new BadRequestException("Room name is required");

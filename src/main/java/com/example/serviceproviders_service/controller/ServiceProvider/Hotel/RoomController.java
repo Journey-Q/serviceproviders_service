@@ -2,6 +2,7 @@ package com.example.serviceproviders_service.controller.ServiceProvider.Hotel;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.CreateRoomDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomResponseDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.UpdateRoomDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Room;
 import com.example.serviceproviders_service.services.ServiceProvider.Hotel.RoomService;
 import org.springframework.http.HttpStatus;
@@ -56,7 +57,7 @@ public class RoomController {
     @PutMapping("/{id}")
     public ResponseEntity<RoomResponseDTO> updateRoom(
             @PathVariable Long id,
-            @RequestBody CreateRoomDTO dto) {
+            @RequestBody UpdateRoomDTO dto) {
         RoomResponseDTO updatedRoom = roomService.updateRoom(id, dto);
         return ResponseEntity.ok(updatedRoom);
     }
