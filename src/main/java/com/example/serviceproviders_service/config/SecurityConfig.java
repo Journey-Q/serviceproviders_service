@@ -167,6 +167,22 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/reviews/*/status").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
                         .requestMatchers(HttpMethod.PATCH, "/service/reviews/*/verification").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT", "ADMIN")
 
+                        // Public endpoints - Tour Package Reviews (for browsing)
+                        .requestMatchers(HttpMethod.GET, "/service/tour-package-reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-package-reviews/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-package-reviews/booking/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-package-reviews/tour/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-package-reviews/user/*").permitAll()
+
+                        // Public - Create tour package reviews (customers)
+                        .requestMatchers(HttpMethod.POST, "/service/tour-package-reviews/create").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/service/tour-package-reviews/*").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/service/tour-package-reviews/*").permitAll()
+
+                        // Tour Guide - Manage tour package review status and verification
+                        .requestMatchers(HttpMethod.PATCH, "/service/tour-package-reviews/*/status").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PATCH, "/service/tour-package-reviews/*/verification").hasAnyRole("TOUR_GUIDE", "ADMIN")
+
 
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
