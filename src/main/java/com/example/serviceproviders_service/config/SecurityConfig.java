@@ -198,6 +198,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/tour-package-reviews/*/status").hasRole("TOUR_GUIDE")
                         .requestMatchers(HttpMethod.PATCH, "/service/tour-package-reviews/*/verification").hasAnyRole("TOUR_GUIDE", "ADMIN")
 
+                        // Public endpoints - Booking History (customers can view their booking history)
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/rooms").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/tours").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/vehicles").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/*").permitAll()
 
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
