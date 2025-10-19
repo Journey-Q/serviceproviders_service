@@ -1,160 +1,219 @@
 package com.example.serviceproviders_service.controller.ServiceProvider.Hotel;
 
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomBookingResponseDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.CreateRoomBookingDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomBookingPaymentDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomBookingPaymentResponseDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.Hotel.RoomBookingResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.RoomBooking;
 import com.example.serviceproviders_service.services.ServiceProvider.Hotel.RoomBookingService;
-import com.example.serviceproviders_service.services.ServiceProvider.Hotel.HotelRoomBookingStripeService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/service/roombookings")
+@RequestMapping("/service/room-bookings")
 @CrossOrigin(origins = "*")
 public class RoomBookingController {
 
-    private final RoomBookingService roomBookingService;
-    private final HotelRoomBookingStripeService stripeService;
+    @Autowired
+    private RoomBookingService bookingService;
 
-    public RoomBookingController(RoomBookingService roomBookingService,
-                                 HotelRoomBookingStripeService stripeService) {
-        this.roomBookingService = roomBookingService;
-        this.stripeService = stripeService;
-    }
-
+    /**
+     * Create a new room booking (Public - any customer can book)
+     */
     @PostMapping("/create")
-    public ResponseEntity<RoomBookingResponseDTO> createRoomBooking(@RequestBody CreateRoomBookingDTO dto) {
-        RoomBookingResponseDTO createdRoomBooking = roomBookingService.createRoomBooking(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdRoomBooking);
-    }
-
-    @PostMapping("/create-with-payment")
-    public ResponseEntity<RoomBookingPaymentResponseDTO> createRoomBookingWithPayment(@RequestBody RoomBookingPaymentDTO dto) {
-        RoomBookingPaymentResponseDTO response = stripeService.createRoomBookingWithPayment(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<RoomBookingResponseDTO> getRoomBookingById(@PathVariable Long id) {
-        RoomBookingResponseDTO roomBooking = roomBookingService.getRoomBookingById(id);
-        return ResponseEntity.ok(roomBooking);
-    }
-
-    @GetMapping("/reference/{bookingReference}")
-    public ResponseEntity<RoomBookingResponseDTO> getRoomBookingByReference(@PathVariable String bookingReference) {
-        RoomBookingResponseDTO roomBooking = roomBookingService.getRoomBookingByReference(bookingReference);
-        return ResponseEntity.ok(roomBooking);
-    }
-
-    @GetMapping("/session/{sessionId}")
-    public ResponseEntity<RoomBookingResponseDTO> getRoomBookingBySessionId(@PathVariable String sessionId) {
-        RoomBookingResponseDTO roomBooking = roomBookingService.getRoomBookingByStripeSessionId(sessionId);
-        return ResponseEntity.ok(roomBooking);
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getAllRoomBookings() {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getAllRoomBookings();
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/service-provider/{serviceProviderId}")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getRoomBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getRoomBookingsByServiceProviderId(serviceProviderId);
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/guest/{guestEmail}")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getRoomBookingsByGuestEmail(@PathVariable String guestEmail) {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getRoomBookingsByGuestEmail(guestEmail);
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getRoomBookingsByUserId(@PathVariable Long userId) {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getRoomBookingsByUserId(userId);
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    // Payment related endpoints
-    @GetMapping("/payments/status/{paymentStatus}")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getRoomBookingsByPaymentStatus(@PathVariable RoomBooking.PaymentStatus paymentStatus) {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getRoomBookingsByPaymentStatus(paymentStatus);
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/payments/successful")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getSuccessfulPayments() {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getSuccessfulPayments();
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/payments/date-range")
-    public ResponseEntity<List<RoomBookingResponseDTO>> getPaymentsByDateRange(
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate) {
-        List<RoomBookingResponseDTO> roomBookings = roomBookingService.getPaymentsByDateRange(startDate, endDate);
-        return ResponseEntity.ok(roomBookings);
-    }
-
-    @GetMapping("/revenue/total")
-    public ResponseEntity<BigDecimal> getTotalRevenue() {
-        BigDecimal totalRevenue = roomBookingService.getTotalRevenue();
-        return ResponseEntity.ok(totalRevenue);
-    }
-
-    @GetMapping("/count/payment-status/{paymentStatus}")
-    public ResponseEntity<Long> countBookingsByPaymentStatus(@PathVariable RoomBooking.PaymentStatus paymentStatus) {
-        long count = roomBookingService.countBookingsByPaymentStatus(paymentStatus);
-        return ResponseEntity.ok(count);
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<RoomBookingResponseDTO> updateRoomBookingStatus(
-            @PathVariable Long id,
-            @RequestParam RoomBooking.RoomBookingStatus status) {
-        RoomBookingResponseDTO updatedRoomBooking = roomBookingService.updateRoomBookingStatus(id, status);
-        return ResponseEntity.ok(updatedRoomBooking);
-    }
-
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<String> cancelRoomBooking(@PathVariable Long id) {
-        boolean response = roomBookingService.cancelRoomBooking(id);
-        if (response) {
-            return ResponseEntity.ok("Room booking cancelled successfully");
+    public ResponseEntity<?> createBooking(@Valid @RequestBody CreateRoomBookingDTO dto) {
+        try {
+            RoomBookingResponseDTO response = bookingService.createBooking(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Validation Error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(createErrorResponse("Booking Conflict", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", "An unexpected error occurred: " + e.getMessage()));
         }
-        return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/refund")
-    public ResponseEntity<RoomBookingResponseDTO> refundPayment(
-            @PathVariable Long id,
-            @RequestParam String refundReason) {
-        RoomBookingResponseDTO refundedBooking = roomBookingService.refundPayment(id, refundReason);
-        return ResponseEntity.ok(refundedBooking);
+    /**
+     * Get booking by ID (Public - customer needs to check their booking)
+     */
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<?> getBookingById(@PathVariable Long bookingId) {
+        try {
+            RoomBookingResponseDTO response = bookingService.getBookingById(bookingId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        }
     }
 
-    // Stripe webhook endpoints
-    @PostMapping("/webhook/payment-success")
-    public ResponseEntity<RoomBookingResponseDTO> handlePaymentSuccess(
-            @RequestParam String sessionId,
-            @RequestParam String paymentIntentId) {
-        RoomBookingResponseDTO updatedBooking = stripeService.handlePaymentSuccess(sessionId, paymentIntentId);
-        return ResponseEntity.ok(updatedBooking);
+    /**
+     * Get all bookings by customer email (Public - customer can see their bookings)
+     */
+    @GetMapping("/customer/{email}")
+    public ResponseEntity<?> getBookingsByCustomerEmail(@PathVariable String email) {
+        try {
+            List<RoomBookingResponseDTO> bookings = bookingService.getBookingsByCustomerEmail(email);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
     }
 
-    @PostMapping("/webhook/payment-failure")
-    public ResponseEntity<RoomBookingResponseDTO> handlePaymentFailure(
-            @RequestParam String sessionId,
-            @RequestParam String failureReason) {
-        RoomBookingResponseDTO updatedBooking = stripeService.handlePaymentFailure(sessionId, failureReason);
-        return ResponseEntity.ok(updatedBooking);
+    /**
+     * Get all bookings by user ID (Public - user can see their bookings)
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getBookingsByUserId(@PathVariable Long userId) {
+        try {
+            List<RoomBookingResponseDTO> bookings = bookingService.getBookingsByUserId(userId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all bookings for a specific room (Hotel staff only)
+     */
+    @GetMapping("/room/{roomId}")
+    @PreAuthorize("hasRole('HOTEL')")
+    public ResponseEntity<?> getBookingsByRoom(@PathVariable Long roomId) {
+        try {
+            List<RoomBookingResponseDTO> bookings = bookingService.getBookingsByRoom(roomId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all bookings for a service provider (Hotel staff only)
+     */
+    @GetMapping("/provider/{serviceProviderId}")
+    @PreAuthorize("hasRole('HOTEL')")
+    public ResponseEntity<?> getBookingsByServiceProvider(@PathVariable Long serviceProviderId) {
+        try {
+            List<RoomBookingResponseDTO> bookings = bookingService.getBookingsByServiceProvider(serviceProviderId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get upcoming bookings for a service provider (Hotel staff only)
+     */
+    @GetMapping("/provider/{serviceProviderId}/upcoming")
+    @PreAuthorize("hasRole('HOTEL')")
+    public ResponseEntity<?> getUpcomingBookings(@PathVariable Long serviceProviderId) {
+        try {
+            List<RoomBookingResponseDTO> bookings = bookingService.getUpcomingBookings(serviceProviderId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel a booking (Public - customers can cancel their bookings)
+     */
+    @PutMapping("/{bookingId}/cancel")
+    public ResponseEntity<?> cancelBooking(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, String> requestBody) {
+        try {
+            String cancellationReason = requestBody.getOrDefault("cancellationReason", "Customer requested cancellation");
+            RoomBookingResponseDTO response = bookingService.cancelBooking(bookingId, cancellationReason);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Update booking status (Hotel staff only - for check-in/check-out)
+     */
+    @PutMapping("/{bookingId}/status")
+    @PreAuthorize("hasRole('HOTEL')")
+    public ResponseEntity<?> updateBookingStatus(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, String> requestBody) {
+        try {
+            String statusStr = requestBody.get("status");
+            if (statusStr == null || statusStr.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Validation Error", "Status is required"));
+            }
+
+            RoomBooking.BookingStatus newStatus = RoomBooking.BookingStatus.valueOf(statusStr.toUpperCase());
+            RoomBookingResponseDTO response = bookingService.updateBookingStatus(bookingId, newStatus);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Status", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Check room availability for specific dates (Public)
+     */
+    @GetMapping("/check-availability")
+    public ResponseEntity<?> checkAvailability(
+            @RequestParam Long roomId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkInDate,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate checkOutDate) {
+        try {
+            boolean isAvailable = bookingService.isRoomAvailable(roomId, checkInDate, checkOutDate);
+            Map<String, Object> response = new HashMap<>();
+            response.put("roomId", roomId);
+            response.put("checkInDate", checkInDate);
+            response.put("checkOutDate", checkOutDate);
+            response.put("available", isAvailable);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Helper method to create error response
+     */
+    private Map<String, String> createErrorResponse(String error, String message) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", error);
+        errorResponse.put("message", message);
+        return errorResponse;
     }
 }

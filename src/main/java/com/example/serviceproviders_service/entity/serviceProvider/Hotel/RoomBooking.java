@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "roombookings")
+@Table(name = "room_bookings")
 @Getter
 @Setter
 public class RoomBooking {
@@ -25,20 +25,19 @@ public class RoomBooking {
     private Long serviceProviderId;
 
     @Column(nullable = false)
-    private Long userId;
+    private Long userId; // User who made the booking
+
+    // Customer Information
+    @Column(nullable = false, length = 100)
+    private String customerName;
 
     @Column(nullable = false, length = 100)
-    private String guestName;
-
-    @Column(nullable = false, length = 150)
-    private String guestEmail;
+    private String customerEmail;
 
     @Column(nullable = false, length = 20)
-    private String guestPhone;
+    private String customerPhone;
 
-    @Column(columnDefinition = "TEXT")
-    private String specialRequests;
-
+    // Booking Details
     @Column(nullable = false)
     private LocalDate checkInDate;
 
@@ -52,68 +51,57 @@ public class RoomBooking {
     private Integer numberOfNights;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal subtotal;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal serviceCharge;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal taxes;
+    private BigDecimal pricePerNight;
 
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
+    // Card Payment Details (stored for record-keeping)
+    @Column(nullable = false, length = 100)
+    private String cardHolderName;
+
+    @Column(nullable = false, length = 19)
+    private String cardNumber; // Note: In production, this should be encrypted
+
+    @Column(nullable = false, length = 7)
+    private String expiryDate; // Format: MM/YYYY
+
+    @Column(nullable = false, length = 4)
+    private String cvv; // Note: In production, this should NOT be stored
+
+    @Column(length = 200)
+    private String billingAddress;
+
+    // Booking Status
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private RoomBookingStatus status;
+    private BookingStatus status;
 
-    @Column(unique = true, length = 50)
-    private String bookingReference;
+    @Column(length = 500)
+    private String specialRequests;
 
-    // Payment related fields
-    @Column(length = 100)
-    private String stripeSessionId;
+    @Column(length = 500)
+    private String cancellationReason;
 
-    @Column(length = 100)
-    private String stripePaymentIntentId;
-
-    @Column(length = 3)
-    private String currency;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentStatus paymentStatus;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethod paymentMethod;
-
-    private String paymentFailureReason;
-
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
-
+    // Timestamps
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "confirmed_at")
+    private LocalDateTime confirmedAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (bookingReference == null) {
-            bookingReference = "RB" + System.currentTimeMillis();
-        }
-        if (paymentStatus == null) {
-            paymentStatus = PaymentStatus.PENDING;
-        }
-        if (paymentMethod == null) {
-            paymentMethod = PaymentMethod.STRIPE_CARD;
-        }
-        if (currency == null) {
-            currency = "USD";
+        if (status == null) {
+            status = BookingStatus.PENDING;
         }
     }
 
@@ -122,28 +110,13 @@ public class RoomBooking {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum RoomBookingStatus {
-        PENDING,
-        CONFIRMED,
-        CHECKED_IN,
-        CHECKED_OUT,
-        CANCELLED
-    }
-
-    public enum PaymentStatus {
-        PENDING,
-        PROCESSING,
-        SUCCEEDED,
-        FAILED,
-        CANCELLED,
-        REFUNDED
-    }
-
-    public enum PaymentMethod {
-        STRIPE_CARD,
-        STRIPE_WALLET,
-        BANK_TRANSFER,
-        CASH
+    public enum BookingStatus {
+        PENDING,      // Initial booking created
+        CONFIRMED,    // Payment processed and booking confirmed
+        CHECKED_IN,   // Customer has checked in
+        CHECKED_OUT,  // Customer has checked out
+        CANCELLED,    // Booking cancelled
+        COMPLETED     // Booking completed (after checkout)
     }
 
     public RoomBooking() {}

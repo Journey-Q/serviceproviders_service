@@ -9,7 +9,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "tourbookings")
+@Table(name = "tour_bookings")
 @Getter
 @Setter
 public class TourBooking {
@@ -22,23 +22,22 @@ public class TourBooking {
     private Long tourId;
 
     @Column(nullable = false)
-    private Long serviceProviderId;
+    private Long serviceProviderId; // Tour Guide ID
 
     @Column(nullable = false)
-    private Long userId;
+    private Long userId; // User who made the booking
 
+    // Customer Information
     @Column(nullable = false, length = 100)
     private String customerName;
 
-    @Column(nullable = false, length = 150)
+    @Column(nullable = false, length = 100)
     private String customerEmail;
 
     @Column(nullable = false, length = 20)
     private String customerPhone;
 
-    @Column(columnDefinition = "TEXT")
-    private String specialRequests;
-
+    // Booking Details
     @Column(nullable = false)
     private LocalDate tourDate;
 
@@ -49,68 +48,63 @@ public class TourBooking {
     private BigDecimal pricePerPerson;
 
     @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal subtotal;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal serviceCharge;
-
-    @Column(nullable = false, precision = 10, scale = 2)
-    private BigDecimal taxes;
-
-    @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal totalAmount;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TourBookingStatus status;
-
-    @Column(unique = true, length = 50)
-    private String bookingReference;
-
-    // Payment related fields
+    // Card Payment Details (optional - for future payment integration)
     @Column(length = 100)
-    private String stripeSessionId;
+    private String cardHolderName;
 
-    @Column(length = 100)
-    private String stripePaymentIntentId;
+    @Column(length = 19)
+    private String cardNumber; // Note: In production, this should be encrypted
 
-    @Column(length = 3)
-    private String currency;
+    @Column(length = 7)
+    private String expiryDate; // Format: MM/YYYY
 
+    @Column(length = 4)
+    private String cvv; // Note: In production, this should NOT be stored
+
+    @Column(length = 200)
+    private String billingAddress;
+
+    // Booking Status
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private PaymentStatus paymentStatus;
+    private BookingStatus status;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PaymentMethod paymentMethod;
+    @Column(length = 500)
+    private String specialRequests;
 
-    private String paymentFailureReason;
+    @Column(length = 500)
+    private String cancellationReason;
 
-    @Column(name = "paid_at")
-    private LocalDateTime paidAt;
+    @Column(length = 500)
+    private String rejectionReason;
 
+    // Timestamps
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    @Column(name = "approved_at")
+    private LocalDateTime approvedAt;
+
+    @Column(name = "rejected_at")
+    private LocalDateTime rejectedAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        if (bookingReference == null) {
-            bookingReference = "TB" + System.currentTimeMillis();
-        }
-        if (paymentStatus == null) {
-            paymentStatus = PaymentStatus.PENDING;
-        }
-        if (paymentMethod == null) {
-            paymentMethod = PaymentMethod.STRIPE_CARD;
-        }
-        if (currency == null) {
-            currency = "USD";
+        if (status == null) {
+            status = BookingStatus.PENDING_APPROVAL;
         }
     }
 
@@ -119,28 +113,12 @@ public class TourBooking {
         updatedAt = LocalDateTime.now();
     }
 
-    public enum TourBookingStatus {
-        PENDING,
-        CONFIRMED,
-        IN_PROGRESS,
-        COMPLETED,
-        CANCELLED
-    }
-
-    public enum PaymentStatus {
-        PENDING,
-        PROCESSING,
-        SUCCEEDED,
-        FAILED,
-        CANCELLED,
-        REFUNDED
-    }
-
-    public enum PaymentMethod {
-        STRIPE_CARD,
-        STRIPE_WALLET,
-        BANK_TRANSFER,
-        CASH
+    public enum BookingStatus {
+        PENDING_APPROVAL,  // Waiting for tour guide to approve
+        APPROVED,          // Tour guide approved the booking
+        REJECTED,          // Tour guide rejected the booking
+        CANCELLED,         // Customer cancelled the booking
+        COMPLETED          // Tour completed
     }
 
     public TourBooking() {}

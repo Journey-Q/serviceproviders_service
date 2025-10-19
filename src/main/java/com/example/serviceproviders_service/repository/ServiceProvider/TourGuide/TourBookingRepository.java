@@ -7,56 +7,68 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface TourBookingRepository extends JpaRepository<TourBooking, Long> {
 
-    List<TourBooking> findByServiceProviderId(Long serviceProviderId);
-
-    List<TourBooking> findByServiceProviderIdAndStatus(Long serviceProviderId, TourBooking.TourBookingStatus status);
-
+    // Find all bookings for a specific tour
     List<TourBooking> findByTourId(Long tourId);
 
-    List<TourBooking> findByUserId(Long userId);
+    // Find all bookings for a tour guide (service provider)
+    List<TourBooking> findByServiceProviderId(Long serviceProviderId);
 
+    // Find bookings by customer email
     List<TourBooking> findByCustomerEmail(String customerEmail);
 
-    Optional<TourBooking> findByBookingReference(String bookingReference);
+    // Find all bookings for a specific user
+    List<TourBooking> findByUserId(Long userId);
 
-    Optional<TourBooking> findByStripeSessionId(String stripeSessionId);
+    // Find bookings by status
+    List<TourBooking> findByStatus(TourBooking.BookingStatus status);
 
-    List<TourBooking> findByPaymentStatus(TourBooking.PaymentStatus paymentStatus);
+    // Find bookings for a specific tour and status
+    List<TourBooking> findByTourIdAndStatus(Long tourId, TourBooking.BookingStatus status);
 
-    @Query("SELECT tb FROM TourBooking tb WHERE tb.tourId = :tourId AND tb.status != 'CANCELLED' " +
-            "AND tb.tourDate = :tourDate")
-    List<TourBooking> findBookingsForTourOnDate(@Param("tourId") Long tourId,
-                                                 @Param("tourDate") LocalDate tourDate);
+    // Find pending approval bookings for a tour guide
+    @Query("SELECT b FROM TourBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status = 'PENDING_APPROVAL' " +
+           "ORDER BY b.createdAt ASC")
+    List<TourBooking> findPendingApprovalBookings(@Param("serviceProviderId") Long serviceProviderId);
 
-    @Query("SELECT COALESCE(SUM(tb.numberOfPeople), 0) FROM TourBooking tb WHERE tb.tourId = :tourId " +
-            "AND tb.tourDate = :tourDate AND tb.status != 'CANCELLED'")
-    Integer countPeopleForTourOnDate(@Param("tourId") Long tourId,
-                                      @Param("tourDate") LocalDate tourDate);
+    // Find approved bookings for a tour guide
+    @Query("SELECT b FROM TourBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status = 'APPROVED' " +
+           "ORDER BY b.tourDate ASC")
+    List<TourBooking> findApprovedBookings(@Param("serviceProviderId") Long serviceProviderId);
 
-    @Query("SELECT tb FROM TourBooking tb WHERE tb.serviceProviderId = :serviceProviderId " +
-            "AND tb.tourDate BETWEEN :startDate AND :endDate")
-    List<TourBooking> findByServiceProviderIdAndDateRange(@Param("serviceProviderId") Long serviceProviderId,
-                                                           @Param("startDate") LocalDate startDate,
-                                                           @Param("endDate") LocalDate endDate);
+    // Find upcoming tours for a tour guide (approved bookings with future dates)
+    @Query("SELECT b FROM TourBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status = 'APPROVED' " +
+           "AND b.tourDate >= :today " +
+           "ORDER BY b.tourDate ASC")
+    List<TourBooking> findUpcomingTours(@Param("serviceProviderId") Long serviceProviderId,
+                                        @Param("today") LocalDate today);
 
-    @Query("SELECT tb FROM TourBooking tb WHERE tb.createdAt BETWEEN :startDate AND :endDate")
-    List<TourBooking> findPaymentsByDateRange(@Param("startDate") LocalDateTime startDate,
-                                               @Param("endDate") LocalDateTime endDate);
+    // Get total number of people booked for a specific tour on a specific date
+    @Query("SELECT COALESCE(SUM(b.numberOfPeople), 0) FROM TourBooking b " +
+           "WHERE b.tourId = :tourId " +
+           "AND b.tourDate = :tourDate " +
+           "AND b.status IN ('PENDING_APPROVAL', 'APPROVED')")
+    Integer getTotalPeopleBookedForTourDate(@Param("tourId") Long tourId,
+                                            @Param("tourDate") LocalDate tourDate);
 
-    @Query("SELECT tb FROM TourBooking tb WHERE tb.paymentStatus = 'SUCCEEDED' AND tb.paidAt BETWEEN :startDate AND :endDate")
-    List<TourBooking> findSuccessfulPaymentsByDateRange(@Param("startDate") LocalDateTime startDate,
-                                                         @Param("endDate") LocalDateTime endDate);
+    // Find all bookings for a specific tour on a specific date
+    @Query("SELECT b FROM TourBooking b WHERE b.tourId = :tourId " +
+           "AND b.tourDate = :tourDate " +
+           "AND b.status IN ('PENDING_APPROVAL', 'APPROVED') " +
+           "ORDER BY b.createdAt ASC")
+    List<TourBooking> findBookingsForTourDate(@Param("tourId") Long tourId,
+                                              @Param("tourDate") LocalDate tourDate);
 
-    long countByServiceProviderId(Long serviceProviderId);
-
-    long countByServiceProviderIdAndStatus(Long serviceProviderId, TourBooking.TourBookingStatus status);
-
-    long countByPaymentStatus(TourBooking.PaymentStatus paymentStatus);
+    // Count bookings by service provider and status
+    @Query("SELECT COUNT(b) FROM TourBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status = :status")
+    Long countByServiceProviderIdAndStatus(@Param("serviceProviderId") Long serviceProviderId,
+                                           @Param("status") TourBooking.BookingStatus status);
 }

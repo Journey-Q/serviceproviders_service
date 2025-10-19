@@ -4,7 +4,6 @@ import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.Create
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourBookingResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.Tour;
 import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.TourBooking;
-import com.example.serviceproviders_service.exception.BadRequestException;
 import com.example.serviceproviders_service.repository.ServiceProvider.TourGuide.TourBookingRepository;
 import com.example.serviceproviders_service.repository.ServiceProvider.TourGuide.TourRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,320 +20,316 @@ import java.util.stream.Collectors;
 public class TourBookingService {
 
     @Autowired
-    private TourBookingRepository tourBookingRepository;
+    private TourBookingRepository bookingRepository;
 
     @Autowired
     private TourRepository tourRepository;
 
-    private static final BigDecimal SERVICE_CHARGE_RATE = new BigDecimal("0.10"); // 10%
-    private static final BigDecimal TAX_RATE = new BigDecimal("0.12"); // 12%
-
+    /**
+     * Create a new tour booking (requires tour guide approval)
+     */
     @Transactional
-    public TourBookingResponseDTO createTourBooking(CreateTourBookingDTO dto) {
-        validateCreateTourBookingDTO(dto);
-
+    public TourBookingResponseDTO createBooking(CreateTourBookingDTO dto) {
+        // Step 1: Validate tour exists
         Tour tour = tourRepository.findById(dto.getTourId())
-                .orElseThrow(() -> new BadRequestException("Tour not found with id: " + dto.getTourId()));
+                .orElseThrow(() -> new IllegalArgumentException("Tour not found with ID: " + dto.getTourId()));
 
-        if (!tour.getStatus().equals(Tour.TourStatus.AVAILABLE)) {
-            throw new BadRequestException("Tour is not available for booking");
+        // Step 2: Validate tour is available
+        if (tour.getStatus() != Tour.TourStatus.AVAILABLE) {
+            throw new IllegalStateException("Tour is not available for booking. Current status: " + tour.getStatus());
         }
 
-        // Check if tour has capacity for the requested number of people
-        Integer currentPeopleBooked = tourBookingRepository.countPeopleForTourOnDate(
+        // Step 3: Validate tour date is in the future
+        validateTourDate(dto.getTourDate());
+
+        // Step 4: Validate number of people
+        validateNumberOfPeople(dto.getNumberOfPeople(), tour);
+
+        // Step 5: Check if tour capacity is not exceeded for the selected date
+        Integer totalBookedPeople = bookingRepository.getTotalPeopleBookedForTourDate(
                 dto.getTourId(), dto.getTourDate());
+        int availableCapacity = tour.getMaxPeople() - totalBookedPeople;
 
-        if (currentPeopleBooked == null) {
-            currentPeopleBooked = 0;
+        if (dto.getNumberOfPeople() > availableCapacity) {
+            throw new IllegalStateException(
+                    String.format("Not enough capacity available. Requested: %d, Available: %d",
+                            dto.getNumberOfPeople(), availableCapacity)
+            );
         }
 
-        int remainingCapacity = tour.getMaxPeople() - currentPeopleBooked;
-        if (dto.getNumberOfPeople() > remainingCapacity) {
-            throw new BadRequestException("Tour does not have enough capacity. Available spots: " + remainingCapacity);
-        }
+        // Step 6: Calculate total amount
+        BigDecimal totalAmount = tour.getPricePerPerson().multiply(BigDecimal.valueOf(dto.getNumberOfPeople()));
 
-        // Check minimum people requirement
-        if (dto.getNumberOfPeople() < tour.getMinPeople() && currentPeopleBooked == 0) {
-            throw new BadRequestException("Minimum " + tour.getMinPeople() + " people required for this tour");
-        }
+        // Step 7: Create booking entity
+        TourBooking booking = new TourBooking();
+        booking.setTourId(tour.getId());
+        booking.setServiceProviderId(tour.getServiceProviderId());
+        booking.setUserId(dto.getUserId());
 
-        BigDecimal subtotal = dto.getPricePerPerson().multiply(new BigDecimal(dto.getNumberOfPeople()));
-        BigDecimal serviceCharge = subtotal.multiply(SERVICE_CHARGE_RATE).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal taxes = subtotal.multiply(TAX_RATE).setScale(2, RoundingMode.HALF_UP);
-        BigDecimal totalAmount = subtotal.add(serviceCharge).add(taxes);
+        // Customer information
+        booking.setCustomerName(dto.getCustomerName());
+        booking.setCustomerEmail(dto.getCustomerEmail());
+        booking.setCustomerPhone(dto.getCustomerPhone());
 
-        TourBooking tourBooking = new TourBooking();
-        tourBooking.setTourId(dto.getTourId());
-        tourBooking.setServiceProviderId(tour.getServiceProviderId());
-        tourBooking.setUserId(dto.getUserId());
-        tourBooking.setCustomerName(dto.getCustomerName());
-        tourBooking.setCustomerEmail(dto.getCustomerEmail());
-        tourBooking.setCustomerPhone(dto.getCustomerPhone());
-        tourBooking.setSpecialRequests(dto.getSpecialRequests());
-        tourBooking.setTourDate(dto.getTourDate());
-        tourBooking.setNumberOfPeople(dto.getNumberOfPeople());
-        tourBooking.setPricePerPerson(dto.getPricePerPerson());
-        tourBooking.setSubtotal(subtotal);
-        tourBooking.setServiceCharge(serviceCharge);
-        tourBooking.setTaxes(taxes);
-        tourBooking.setTotalAmount(totalAmount);
-        tourBooking.setStatus(TourBooking.TourBookingStatus.PENDING);
-        tourBooking.setCurrency(dto.getCurrency() != null ? dto.getCurrency().toUpperCase() : "USD");
-        tourBooking.setPaymentStatus(TourBooking.PaymentStatus.PENDING);
-        tourBooking.setPaymentMethod(TourBooking.PaymentMethod.STRIPE_CARD);
+        // Booking details
+        booking.setTourDate(dto.getTourDate());
+        booking.setNumberOfPeople(dto.getNumberOfPeople());
+        booking.setPricePerPerson(tour.getPricePerPerson());
+        booking.setTotalAmount(totalAmount);
 
-        TourBooking savedTourBooking = tourBookingRepository.save(tourBooking);
-        return TourBookingResponseDTO.fromEntity(savedTourBooking);
+        // Special requests
+        booking.setSpecialRequests(dto.getSpecialRequests());
+
+        // Set status as PENDING_APPROVAL (waiting for tour guide to accept)
+        booking.setStatus(TourBooking.BookingStatus.PENDING_APPROVAL);
+
+        // Step 9: Save booking
+        TourBooking savedBooking = bookingRepository.save(booking);
+
+        // Step 10: Return response DTO
+        return new TourBookingResponseDTO(savedBooking);
     }
 
+    /**
+     * Validate tour date
+     */
+    private void validateTourDate(LocalDate tourDate) {
+        LocalDate today = LocalDate.now();
+
+        // Tour date must be in the future
+        if (tourDate.isBefore(today)) {
+            throw new IllegalArgumentException("Tour date must be in the future");
+        }
+
+        // Tour date should not be too far in the future (e.g., 1 year)
+        LocalDate maxDate = today.plusYears(1);
+        if (tourDate.isAfter(maxDate)) {
+            throw new IllegalArgumentException("Tour date cannot be more than 1 year in the future");
+        }
+    }
+
+    /**
+     * Validate number of people against tour capacity
+     */
+    private void validateNumberOfPeople(Integer numberOfPeople, Tour tour) {
+        if (numberOfPeople < tour.getMinPeople()) {
+            throw new IllegalArgumentException(
+                    String.format("Minimum %d people required for this tour", tour.getMinPeople())
+            );
+        }
+
+        if (numberOfPeople > tour.getMaxPeople()) {
+            throw new IllegalArgumentException(
+                    String.format("Maximum %d people allowed for this tour", tour.getMaxPeople())
+            );
+        }
+    }
+
+    /**
+     * Tour Guide approves a booking
+     */
     @Transactional
-    public TourBookingResponseDTO updatePaymentDetails(Long bookingId, String stripeSessionId,
-                                                       String stripePaymentIntentId,
-                                                       TourBooking.PaymentStatus paymentStatus) {
-        TourBooking tourBooking = tourBookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with id: " + bookingId));
+    public TourBookingResponseDTO approveBooking(Long bookingId, Long tourGuideId) {
+        TourBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
 
-        tourBooking.setStripeSessionId(stripeSessionId);
-        tourBooking.setStripePaymentIntentId(stripePaymentIntentId);
-        tourBooking.setPaymentStatus(paymentStatus);
-
-        if (paymentStatus == TourBooking.PaymentStatus.SUCCEEDED) {
-            tourBooking.setPaidAt(LocalDateTime.now());
-            tourBooking.setStatus(TourBooking.TourBookingStatus.CONFIRMED);
+        // Verify the tour guide owns this booking
+        if (!booking.getServiceProviderId().equals(tourGuideId)) {
+            throw new IllegalStateException("You are not authorized to approve this booking");
         }
 
-        TourBooking updatedBooking = tourBookingRepository.save(tourBooking);
-        return TourBookingResponseDTO.fromEntity(updatedBooking);
+        // Only PENDING_APPROVAL bookings can be approved
+        if (booking.getStatus() != TourBooking.BookingStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only pending bookings can be approved. Current status: " + booking.getStatus());
+        }
+
+        // Verify tour date hasn't passed
+        if (booking.getTourDate().isBefore(LocalDate.now())) {
+            throw new IllegalStateException("Cannot approve booking for past tour date");
+        }
+
+        booking.setStatus(TourBooking.BookingStatus.APPROVED);
+        booking.setApprovedAt(LocalDateTime.now());
+
+        TourBooking updatedBooking = bookingRepository.save(booking);
+        return new TourBookingResponseDTO(updatedBooking);
     }
 
+    /**
+     * Tour Guide rejects a booking
+     */
     @Transactional
-    public TourBookingResponseDTO updatePaymentFailure(String stripeSessionId, String failureReason) {
-        TourBooking tourBooking = tourBookingRepository.findByStripeSessionId(stripeSessionId)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with session ID: " + stripeSessionId));
+    public TourBookingResponseDTO rejectBooking(Long bookingId, Long tourGuideId, String rejectionReason) {
+        TourBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
 
-        tourBooking.setPaymentFailureReason(failureReason);
-        tourBooking.setPaymentStatus(TourBooking.PaymentStatus.FAILED);
-
-        TourBooking updatedBooking = tourBookingRepository.save(tourBooking);
-        return TourBookingResponseDTO.fromEntity(updatedBooking);
-    }
-
-    @Transactional(readOnly = true)
-    public TourBookingResponseDTO getTourBookingById(Long id) {
-        if (id == null || id <= 0) {
-            throw new BadRequestException("Invalid tour booking ID");
+        // Verify the tour guide owns this booking
+        if (!booking.getServiceProviderId().equals(tourGuideId)) {
+            throw new IllegalStateException("You are not authorized to reject this booking");
         }
-        TourBooking tourBooking = tourBookingRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with id: " + id));
-        return TourBookingResponseDTO.fromEntity(tourBooking);
-    }
 
-    @Transactional(readOnly = true)
-    public TourBookingResponseDTO getTourBookingByReference(String bookingReference) {
-        if (bookingReference == null || bookingReference.trim().isEmpty()) {
-            throw new BadRequestException("Booking reference is required");
+        // Only PENDING_APPROVAL bookings can be rejected
+        if (booking.getStatus() != TourBooking.BookingStatus.PENDING_APPROVAL) {
+            throw new IllegalStateException("Only pending bookings can be rejected. Current status: " + booking.getStatus());
         }
-        TourBooking tourBooking = tourBookingRepository.findByBookingReference(bookingReference)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with reference: " + bookingReference));
-        return TourBookingResponseDTO.fromEntity(tourBooking);
+
+        booking.setStatus(TourBooking.BookingStatus.REJECTED);
+        booking.setRejectionReason(rejectionReason != null ? rejectionReason : "Tour guide rejected the booking");
+        booking.setRejectedAt(LocalDateTime.now());
+
+        TourBooking updatedBooking = bookingRepository.save(booking);
+        return new TourBookingResponseDTO(updatedBooking);
     }
 
-    @Transactional(readOnly = true)
-    public TourBookingResponseDTO getTourBookingByStripeSessionId(String stripeSessionId) {
-        if (stripeSessionId == null || stripeSessionId.trim().isEmpty()) {
-            throw new BadRequestException("Stripe session ID is required");
-        }
-        TourBooking tourBooking = tourBookingRepository.findByStripeSessionId(stripeSessionId)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with session ID: " + stripeSessionId));
-        return TourBookingResponseDTO.fromEntity(tourBooking);
+    /**
+     * Get booking by ID
+     */
+    public TourBookingResponseDTO getBookingById(Long bookingId) {
+        TourBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
+        return new TourBookingResponseDTO(booking);
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getAllTourBookings() {
-        return tourBookingRepository.findAll()
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get all bookings for a tour guide
+     */
+    public List<TourBookingResponseDTO> getBookingsByTourGuide(Long tourGuideId) {
+        List<TourBooking> bookings = bookingRepository.findByServiceProviderId(tourGuideId);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getTourBookingsByServiceProviderId(Long serviceProviderId) {
-        if (serviceProviderId == null || serviceProviderId <= 0) {
-            throw new BadRequestException("Invalid service provider ID");
-        }
-        return tourBookingRepository.findByServiceProviderId(serviceProviderId)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get all bookings for a specific tour
+     */
+    public List<TourBookingResponseDTO> getBookingsByTour(Long tourId) {
+        List<TourBooking> bookings = bookingRepository.findByTourId(tourId);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getTourBookingsByCustomerEmail(String customerEmail) {
-        if (customerEmail == null || customerEmail.trim().isEmpty()) {
-            throw new BadRequestException("Customer email is required");
-        }
-        return tourBookingRepository.findByCustomerEmail(customerEmail)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get bookings by customer email
+     */
+    public List<TourBookingResponseDTO> getBookingsByCustomerEmail(String email) {
+        List<TourBooking> bookings = bookingRepository.findByCustomerEmail(email);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getTourBookingsByUserId(Long userId) {
-        if (userId == null || userId <= 0) {
-            throw new BadRequestException("Invalid user ID");
-        }
-        return tourBookingRepository.findByUserId(userId)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get all bookings for a specific user
+     */
+    public List<TourBookingResponseDTO> getBookingsByUserId(Long userId) {
+        List<TourBooking> bookings = bookingRepository.findByUserId(userId);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getTourBookingsByPaymentStatus(TourBooking.PaymentStatus paymentStatus) {
-        if (paymentStatus == null) {
-            throw new BadRequestException("Payment status is required");
-        }
-        return tourBookingRepository.findByPaymentStatus(paymentStatus)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get pending approval bookings for a tour guide
+     */
+    public List<TourBookingResponseDTO> getPendingApprovalBookings(Long tourGuideId) {
+        List<TourBooking> bookings = bookingRepository.findPendingApprovalBookings(tourGuideId);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getSuccessfulPayments() {
-        return tourBookingRepository.findByPaymentStatus(TourBooking.PaymentStatus.SUCCEEDED)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get approved bookings for a tour guide
+     */
+    public List<TourBookingResponseDTO> getApprovedBookings(Long tourGuideId) {
+        List<TourBooking> bookings = bookingRepository.findApprovedBookings(tourGuideId);
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
-    @Transactional(readOnly = true)
-    public List<TourBookingResponseDTO> getPaymentsByDateRange(LocalDateTime startDate, LocalDateTime endDate) {
-        if (startDate == null || endDate == null) {
-            throw new BadRequestException("Start date and end date are required");
-        }
-        if (startDate.isAfter(endDate)) {
-            throw new BadRequestException("Start date cannot be after end date");
-        }
-        return tourBookingRepository.findPaymentsByDateRange(startDate, endDate)
-                .stream()
-                .map(TourBookingResponseDTO::fromEntity)
+    /**
+     * Get upcoming tours for a tour guide
+     */
+    public List<TourBookingResponseDTO> getUpcomingTours(Long tourGuideId) {
+        List<TourBooking> bookings = bookingRepository.findUpcomingTours(tourGuideId, LocalDate.now());
+        return bookings.stream()
+                .map(TourBookingResponseDTO::new)
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Cancel a booking (by customer)
+     */
     @Transactional
-    public TourBookingResponseDTO updateTourBookingStatus(Long id, TourBooking.TourBookingStatus status) {
-        if (id == null || id <= 0) {
-            throw new BadRequestException("Invalid tour booking ID");
+    public TourBookingResponseDTO cancelBooking(Long bookingId, String cancellationReason) {
+        TourBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
+
+        // Only PENDING_APPROVAL and APPROVED bookings can be cancelled by customer
+        if (booking.getStatus() == TourBooking.BookingStatus.CANCELLED) {
+            throw new IllegalStateException("Booking is already cancelled");
         }
-        if (status == null) {
-            throw new BadRequestException("Tour booking status is required");
+        if (booking.getStatus() == TourBooking.BookingStatus.COMPLETED) {
+            throw new IllegalStateException("Cannot cancel a completed booking");
+        }
+        if (booking.getStatus() == TourBooking.BookingStatus.REJECTED) {
+            throw new IllegalStateException("Cannot cancel a rejected booking");
         }
 
-        TourBooking tourBooking = tourBookingRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with id: " + id));
+        // Validate cancellation is made before tour date
+        if (LocalDate.now().isAfter(booking.getTourDate())) {
+            throw new IllegalStateException("Cannot cancel booking after tour date");
+        }
 
-        tourBooking.setStatus(status);
-        TourBooking updatedTourBooking = tourBookingRepository.save(tourBooking);
-        return TourBookingResponseDTO.fromEntity(updatedTourBooking);
+        booking.setStatus(TourBooking.BookingStatus.CANCELLED);
+        booking.setCancellationReason(cancellationReason != null ? cancellationReason : "Customer cancelled the booking");
+        booking.setCancelledAt(LocalDateTime.now());
+
+        TourBooking updatedBooking = bookingRepository.save(booking);
+        return new TourBookingResponseDTO(updatedBooking);
     }
 
+    /**
+     * Mark booking as completed (by tour guide after tour)
+     */
     @Transactional
-    public boolean cancelTourBooking(Long id) {
-        if (id == null || id <= 0) {
-            throw new BadRequestException("Invalid tour booking ID");
+    public TourBookingResponseDTO completeBooking(Long bookingId, Long tourGuideId) {
+        TourBooking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new IllegalArgumentException("Booking not found with ID: " + bookingId));
+
+        // Verify the tour guide owns this booking
+        if (!booking.getServiceProviderId().equals(tourGuideId)) {
+            throw new IllegalStateException("You are not authorized to complete this booking");
         }
 
-        TourBooking tourBooking = tourBookingRepository.findById(id)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with id: " + id));
-
-        if (tourBooking.getStatus().equals(TourBooking.TourBookingStatus.IN_PROGRESS) ||
-                tourBooking.getStatus().equals(TourBooking.TourBookingStatus.COMPLETED)) {
-            throw new BadRequestException("Cannot cancel tour booking that is already in progress or completed");
+        // Only APPROVED bookings can be completed
+        if (booking.getStatus() != TourBooking.BookingStatus.APPROVED) {
+            throw new IllegalStateException("Only approved bookings can be completed");
         }
 
-        tourBooking.setStatus(TourBooking.TourBookingStatus.CANCELLED);
-        tourBooking.setPaymentStatus(TourBooking.PaymentStatus.CANCELLED);
-        tourBookingRepository.save(tourBooking);
-        return true;
+        // Tour date should be today or in the past
+        if (booking.getTourDate().isAfter(LocalDate.now())) {
+            throw new IllegalStateException("Cannot complete booking before tour date");
+        }
+
+        booking.setStatus(TourBooking.BookingStatus.COMPLETED);
+        booking.setCompletedAt(LocalDateTime.now());
+
+        TourBooking updatedBooking = bookingRepository.save(booking);
+        return new TourBookingResponseDTO(updatedBooking);
     }
 
-    @Transactional
-    public TourBookingResponseDTO refundPayment(Long bookingId, String refundReason) {
-        if (bookingId == null || bookingId <= 0) {
-            throw new BadRequestException("Invalid booking ID");
-        }
+    /**
+     * Get available capacity for a tour on a specific date
+     */
+    public int getAvailableCapacity(Long tourId, LocalDate tourDate) {
+        Tour tour = tourRepository.findById(tourId)
+                .orElseThrow(() -> new IllegalArgumentException("Tour not found with ID: " + tourId));
 
-        TourBooking tourBooking = tourBookingRepository.findById(bookingId)
-                .orElseThrow(() -> new BadRequestException("Tour booking not found with id: " + bookingId));
-
-        if (!tourBooking.getPaymentStatus().equals(TourBooking.PaymentStatus.SUCCEEDED)) {
-            throw new BadRequestException("Only successful payments can be refunded");
-        }
-
-        tourBooking.setPaymentStatus(TourBooking.PaymentStatus.REFUNDED);
-        tourBooking.setPaymentFailureReason(refundReason);
-
-        TourBooking updatedBooking = tourBookingRepository.save(tourBooking);
-        return TourBookingResponseDTO.fromEntity(updatedBooking);
-    }
-
-    @Transactional(readOnly = true)
-    public BigDecimal getTotalRevenue() {
-        return tourBookingRepository.findByPaymentStatus(TourBooking.PaymentStatus.SUCCEEDED)
-                .stream()
-                .map(TourBooking::getTotalAmount)
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-    }
-
-    @Transactional(readOnly = true)
-    public long countBookingsByPaymentStatus(TourBooking.PaymentStatus paymentStatus) {
-        if (paymentStatus == null) {
-            throw new BadRequestException("Payment status is required");
-        }
-        return tourBookingRepository.findByPaymentStatus(paymentStatus).size();
-    }
-
-    private void validateCreateTourBookingDTO(CreateTourBookingDTO dto) {
-        if (dto == null) {
-            throw new BadRequestException("Tour booking data cannot be null");
-        }
-        if (dto.getTourId() == null || dto.getTourId() <= 0) {
-            throw new BadRequestException("Tour ID is required and must be positive");
-        }
-        if (dto.getUserId() == null || dto.getUserId() <= 0) {
-            throw new BadRequestException("User ID is required and must be positive");
-        }
-        if (dto.getCustomerName() == null || dto.getCustomerName().trim().isEmpty()) {
-            throw new BadRequestException("Customer name is required");
-        }
-        if (dto.getCustomerName().length() > 100) {
-            throw new BadRequestException("Customer name cannot exceed 100 characters");
-        }
-        if (dto.getCustomerEmail() == null || dto.getCustomerEmail().trim().isEmpty()) {
-            throw new BadRequestException("Customer email is required");
-        }
-        if (!dto.getCustomerEmail().matches("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$")) {
-            throw new BadRequestException("Invalid email format");
-        }
-        if (dto.getCustomerPhone() == null || dto.getCustomerPhone().trim().isEmpty()) {
-            throw new BadRequestException("Customer phone is required");
-        }
-        if (dto.getTourDate() == null) {
-            throw new BadRequestException("Tour date is required");
-        }
-        if (dto.getTourDate().isBefore(LocalDate.now())) {
-            throw new BadRequestException("Tour date cannot be in the past");
-        }
-        if (dto.getNumberOfPeople() == null || dto.getNumberOfPeople() <= 0) {
-            throw new BadRequestException("Number of people must be positive");
-        }
-        if (dto.getNumberOfPeople() > 50) {
-            throw new BadRequestException("Number of people cannot exceed 50");
-        }
-        if (dto.getPricePerPerson() == null || dto.getPricePerPerson().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BadRequestException("Price per person must be positive");
-        }
+        Integer totalBookedPeople = bookingRepository.getTotalPeopleBookedForTourDate(tourId, tourDate);
+        return tour.getMaxPeople() - totalBookedPeople;
     }
 }
