@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\PaymentAnalyticsDTO.java\")",
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\RevenueReportDTO.java\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
