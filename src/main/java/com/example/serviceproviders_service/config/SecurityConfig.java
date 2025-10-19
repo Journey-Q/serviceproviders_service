@@ -155,7 +155,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/service/reviews/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/reviews/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/reviews/booking/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/reviews/service-provider/*").permitAll()
 
                         // Authenticated users - Create and manage their own reviews
                         .requestMatchers(HttpMethod.POST, "/service/reviews/create").authenticated()
