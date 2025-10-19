@@ -51,7 +51,7 @@ public class SecurityConfig {
                         // Public endpoints - Rooms (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/rooms/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/rooms/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/rooms/service-provider/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/rooms/service-provider/*").permitAll()
 
                         // Hotel role endpoints - Room management
                         .requestMatchers(HttpMethod.POST, "/service/rooms/create").hasRole("HOTEL")
