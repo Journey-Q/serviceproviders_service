@@ -114,6 +114,21 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/vehicles/*/status").hasRole("TRAVEL_AGENT")
                         .requestMatchers(HttpMethod.DELETE, "/service/vehicles/*").hasRole("TRAVEL_AGENT")
 
+                        // Public endpoints - Vehicle Bookings (customers can book and check bookings)
+                        .requestMatchers(HttpMethod.POST, "/service/vehicle-bookings/create").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/customer/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/user/*").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/service/vehicle-bookings/*/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/vehicle/*/availability").permitAll()
+
+                        // Travel Agent role endpoints - Vehicle Booking management (approval workflow)
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/vehicle/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/service/vehicle-bookings/agency/*").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PUT, "/service/vehicle-bookings/*/approve").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PUT, "/service/vehicle-bookings/*/reject").hasRole("TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PUT, "/service/vehicle-bookings/*/complete").hasRole("TRAVEL_AGENT")
+
                         // Public endpoints - Agency Profiles (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/agency-profiles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/agency-profiles/all").permitAll()
