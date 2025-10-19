@@ -11,71 +11,72 @@ import java.time.LocalDateTime;
 @Getter
 @Setter
 public class RoomBookingResponseDTO {
+
     private Long id;
     private Long roomId;
     private Long serviceProviderId;
     private Long userId;
-    private String guestName;
-    private String guestEmail;
-    private String guestPhone;
-    private String specialRequests;
+
+    // Customer Information
+    private String customerName;
+    private String customerEmail;
+    private String customerPhone;
+
+    // Booking Details
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private Integer numberOfGuests;
     private Integer numberOfNights;
-    private BigDecimal subtotal;
-    private BigDecimal serviceCharge;
-    private BigDecimal taxes;
+    private BigDecimal pricePerNight;
     private BigDecimal totalAmount;
-    private RoomBooking.RoomBookingStatus status;
-    private String bookingReference;
 
-    // Payment related fields
-    private String stripeSessionId;
-    private String stripePaymentIntentId;
-    private String currency;
-    private RoomBooking.PaymentStatus paymentStatus;
-    private RoomBooking.PaymentMethod paymentMethod;
-    private String paymentFailureReason;
-    private LocalDateTime paidAt;
+    // Card Details (masked for security)
+    private String cardHolderName;
+    private String maskedCardNumber; // Only last 4 digits shown
+    private String expiryDate;
 
+    // Booking Status
+    private String status;
+    private String specialRequests;
+    private String cancellationReason;
+
+    // Timestamps
     private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private LocalDateTime confirmedAt;
+    private LocalDateTime cancelledAt;
 
     public RoomBookingResponseDTO() {}
 
-    public static RoomBookingResponseDTO fromEntity(RoomBooking roomBooking) {
-        RoomBookingResponseDTO dto = new RoomBookingResponseDTO();
-        dto.setId(roomBooking.getId());
-        dto.setRoomId(roomBooking.getRoomId());
-        dto.setServiceProviderId(roomBooking.getServiceProviderId());
-        dto.setUserId(roomBooking.getUserId());
-        dto.setGuestName(roomBooking.getGuestName());
-        dto.setGuestEmail(roomBooking.getGuestEmail());
-        dto.setGuestPhone(roomBooking.getGuestPhone());
-        dto.setSpecialRequests(roomBooking.getSpecialRequests());
-        dto.setCheckInDate(roomBooking.getCheckInDate());
-        dto.setCheckOutDate(roomBooking.getCheckOutDate());
-        dto.setNumberOfGuests(roomBooking.getNumberOfGuests());
-        dto.setNumberOfNights(roomBooking.getNumberOfNights());
-        dto.setSubtotal(roomBooking.getSubtotal());
-        dto.setServiceCharge(roomBooking.getServiceCharge());
-        dto.setTaxes(roomBooking.getTaxes());
-        dto.setTotalAmount(roomBooking.getTotalAmount());
-        dto.setStatus(roomBooking.getStatus());
-        dto.setBookingReference(roomBooking.getBookingReference());
+    // Constructor to convert entity to DTO
+    public RoomBookingResponseDTO(RoomBooking booking) {
+        this.id = booking.getId();
+        this.roomId = booking.getRoomId();
+        this.serviceProviderId = booking.getServiceProviderId();
+        this.userId = booking.getUserId();
+        this.customerName = booking.getCustomerName();
+        this.customerEmail = booking.getCustomerEmail();
+        this.customerPhone = booking.getCustomerPhone();
+        this.checkInDate = booking.getCheckInDate();
+        this.checkOutDate = booking.getCheckOutDate();
+        this.numberOfGuests = booking.getNumberOfGuests();
+        this.numberOfNights = booking.getNumberOfNights();
+        this.pricePerNight = booking.getPricePerNight();
+        this.totalAmount = booking.getTotalAmount();
+        this.cardHolderName = booking.getCardHolderName();
+        this.maskedCardNumber = maskCardNumber(booking.getCardNumber());
+        this.expiryDate = booking.getExpiryDate();
+        this.status = booking.getStatus().name();
+        this.specialRequests = booking.getSpecialRequests();
+        this.cancellationReason = booking.getCancellationReason();
+        this.createdAt = booking.getCreatedAt();
+        this.confirmedAt = booking.getConfirmedAt();
+        this.cancelledAt = booking.getCancelledAt();
+    }
 
-        // Payment fields
-        dto.setStripeSessionId(roomBooking.getStripeSessionId());
-        dto.setStripePaymentIntentId(roomBooking.getStripePaymentIntentId());
-        dto.setCurrency(roomBooking.getCurrency());
-        dto.setPaymentStatus(roomBooking.getPaymentStatus());
-        dto.setPaymentMethod(roomBooking.getPaymentMethod());
-        dto.setPaymentFailureReason(roomBooking.getPaymentFailureReason());
-        dto.setPaidAt(roomBooking.getPaidAt());
-
-        dto.setCreatedAt(roomBooking.getCreatedAt());
-        dto.setUpdatedAt(roomBooking.getUpdatedAt());
-        return dto;
+    private String maskCardNumber(String cardNumber) {
+        if (cardNumber == null || cardNumber.length() < 4) {
+            return "****";
+        }
+        return "**** **** **** " + cardNumber.substring(cardNumber.length() - 4);
     }
 }

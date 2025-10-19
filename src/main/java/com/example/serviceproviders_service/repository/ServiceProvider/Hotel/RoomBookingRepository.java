@@ -7,52 +7,50 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface RoomBookingRepository extends JpaRepository<RoomBooking, Long> {
 
-    List<RoomBooking> findByServiceProviderId(Long serviceProviderId);
-
-    List<RoomBooking> findByServiceProviderIdAndStatus(Long serviceProviderId, RoomBooking.RoomBookingStatus status);
-
+    // Find all bookings for a specific room
     List<RoomBooking> findByRoomId(Long roomId);
 
+    // Find all bookings for a service provider
+    List<RoomBooking> findByServiceProviderId(Long serviceProviderId);
+
+    // Find bookings by customer email
+    List<RoomBooking> findByCustomerEmail(String customerEmail);
+
+    // Find all bookings for a specific user
     List<RoomBooking> findByUserId(Long userId);
 
-    List<RoomBooking> findByGuestEmail(String guestEmail);
+    // Find bookings by status
+    List<RoomBooking> findByStatus(RoomBooking.BookingStatus status);
 
-    Optional<RoomBooking> findByBookingReference(String bookingReference);
+    // Find bookings for a specific room and status
+    List<RoomBooking> findByRoomIdAndStatus(Long roomId, RoomBooking.BookingStatus status);
 
-    Optional<RoomBooking> findByStripeSessionId(String stripeSessionId);
+    // Check for overlapping bookings for a room (critical for validation)
+    @Query("SELECT COUNT(b) > 0 FROM RoomBooking b WHERE b.roomId = :roomId " +
+           "AND b.status NOT IN ('CANCELLED', 'COMPLETED') " +
+           "AND ((b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate))")
+    boolean existsOverlappingBooking(@Param("roomId") Long roomId,
+                                     @Param("checkInDate") LocalDate checkInDate,
+                                     @Param("checkOutDate") LocalDate checkOutDate);
 
-    List<RoomBooking> findByPaymentStatus(RoomBooking.PaymentStatus paymentStatus);
+    // Get all active bookings for a room within a date range
+    @Query("SELECT b FROM RoomBooking b WHERE b.roomId = :roomId " +
+           "AND b.status NOT IN ('CANCELLED', 'COMPLETED') " +
+           "AND ((b.checkInDate <= :checkOutDate AND b.checkOutDate >= :checkInDate))")
+    List<RoomBooking> findOverlappingBookings(@Param("roomId") Long roomId,
+                                              @Param("checkInDate") LocalDate checkInDate,
+                                              @Param("checkOutDate") LocalDate checkOutDate);
 
-    @Query("SELECT rb FROM RoomBooking rb WHERE rb.roomId = :roomId AND rb.status != 'CANCELLED' " +
-            "AND ((rb.checkInDate <= :checkOutDate AND rb.checkOutDate >= :checkInDate))")
-    List<RoomBooking> findConflictingRoomBookings(@Param("roomId") Long roomId,
-                                                  @Param("checkInDate") LocalDate checkInDate,
-                                                  @Param("checkOutDate") LocalDate checkOutDate);
-
-    @Query("SELECT rb FROM RoomBooking rb WHERE rb.serviceProviderId = :serviceProviderId " +
-            "AND rb.checkInDate BETWEEN :startDate AND :endDate")
-    List<RoomBooking> findByServiceProviderIdAndDateRange(@Param("serviceProviderId") Long serviceProviderId,
-                                                          @Param("startDate") LocalDate startDate,
-                                                          @Param("endDate") LocalDate endDate);
-
-    @Query("SELECT rb FROM RoomBooking rb WHERE rb.createdAt BETWEEN :startDate AND :endDate")
-    List<RoomBooking> findPaymentsByDateRange(@Param("startDate") LocalDateTime startDate,
-                                              @Param("endDate") LocalDateTime endDate);
-
-    @Query("SELECT rb FROM RoomBooking rb WHERE rb.paymentStatus = 'SUCCEEDED' AND rb.paidAt BETWEEN :startDate AND :endDate")
-    List<RoomBooking> findSuccessfulPaymentsByDateRange(@Param("startDate") LocalDateTime startDate,
-                                                        @Param("endDate") LocalDateTime endDate);
-
-    long countByServiceProviderId(Long serviceProviderId);
-
-    long countByServiceProviderIdAndStatus(Long serviceProviderId, RoomBooking.RoomBookingStatus status);
-
-    long countByPaymentStatus(RoomBooking.PaymentStatus paymentStatus);
+    // Find upcoming bookings for a service provider
+    @Query("SELECT b FROM RoomBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.checkInDate >= :today " +
+           "AND b.status IN ('CONFIRMED', 'PENDING') " +
+           "ORDER BY b.checkInDate ASC")
+    List<RoomBooking> findUpcomingBookings(@Param("serviceProviderId") Long serviceProviderId,
+                                           @Param("today") LocalDate today);
 }

@@ -1,160 +1,309 @@
 package com.example.serviceproviders_service.controller.ServiceProvider.TourGuide;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.CreateTourBookingDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourBookingPaymentDTO;
-import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourBookingPaymentResponseDTO;
 import com.example.serviceproviders_service.dto.ServiceProvider.TourGuide.TourBookingResponseDTO;
-import com.example.serviceproviders_service.entity.serviceProvider.TourGuide.TourBooking;
 import com.example.serviceproviders_service.services.ServiceProvider.TourGuide.TourBookingService;
-import com.example.serviceproviders_service.services.ServiceProvider.TourGuide.TourBookingStripeService;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/service/tourbookings")
+@RequestMapping("/service/tour-bookings")
 @CrossOrigin(origins = "*")
 public class TourBookingController {
 
-    private final TourBookingService tourBookingService;
-    private final TourBookingStripeService stripeService;
+    @Autowired
+    private TourBookingService bookingService;
 
-    public TourBookingController(TourBookingService tourBookingService,
-                                 TourBookingStripeService stripeService) {
-        this.tourBookingService = tourBookingService;
-        this.stripeService = stripeService;
-    }
-
+    /**
+     * Create a new tour booking (Public - any customer can book)
+     * Status will be PENDING_APPROVAL - waiting for tour guide to accept
+     */
     @PostMapping("/create")
-    public ResponseEntity<TourBookingResponseDTO> createTourBooking(@RequestBody CreateTourBookingDTO dto) {
-        TourBookingResponseDTO createdTourBooking = tourBookingService.createTourBooking(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdTourBooking);
-    }
-
-    @PostMapping("/create-with-payment")
-    public ResponseEntity<TourBookingPaymentResponseDTO> createTourBookingWithPayment(@RequestBody TourBookingPaymentDTO dto) {
-        TourBookingPaymentResponseDTO response = stripeService.createTourBookingWithPayment(dto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<TourBookingResponseDTO> getTourBookingById(@PathVariable Long id) {
-        TourBookingResponseDTO tourBooking = tourBookingService.getTourBookingById(id);
-        return ResponseEntity.ok(tourBooking);
-    }
-
-    @GetMapping("/reference/{bookingReference}")
-    public ResponseEntity<TourBookingResponseDTO> getTourBookingByReference(@PathVariable String bookingReference) {
-        TourBookingResponseDTO tourBooking = tourBookingService.getTourBookingByReference(bookingReference);
-        return ResponseEntity.ok(tourBooking);
-    }
-
-    @GetMapping("/session/{sessionId}")
-    public ResponseEntity<TourBookingResponseDTO> getTourBookingBySessionId(@PathVariable String sessionId) {
-        TourBookingResponseDTO tourBooking = tourBookingService.getTourBookingByStripeSessionId(sessionId);
-        return ResponseEntity.ok(tourBooking);
-    }
-
-    @GetMapping("/all")
-    public ResponseEntity<List<TourBookingResponseDTO>> getAllTourBookings() {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getAllTourBookings();
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/service-provider/{serviceProviderId}")
-    public ResponseEntity<List<TourBookingResponseDTO>> getTourBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getTourBookingsByServiceProviderId(serviceProviderId);
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/customer/{customerEmail}")
-    public ResponseEntity<List<TourBookingResponseDTO>> getTourBookingsByCustomerEmail(@PathVariable String customerEmail) {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getTourBookingsByCustomerEmail(customerEmail);
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/user/{userId}")
-    public ResponseEntity<List<TourBookingResponseDTO>> getTourBookingsByUserId(@PathVariable Long userId) {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getTourBookingsByUserId(userId);
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    // Payment related endpoints
-    @GetMapping("/payments/status/{paymentStatus}")
-    public ResponseEntity<List<TourBookingResponseDTO>> getTourBookingsByPaymentStatus(@PathVariable TourBooking.PaymentStatus paymentStatus) {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getTourBookingsByPaymentStatus(paymentStatus);
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/payments/successful")
-    public ResponseEntity<List<TourBookingResponseDTO>> getSuccessfulPayments() {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getSuccessfulPayments();
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/payments/date-range")
-    public ResponseEntity<List<TourBookingResponseDTO>> getPaymentsByDateRange(
-            @RequestParam LocalDateTime startDate,
-            @RequestParam LocalDateTime endDate) {
-        List<TourBookingResponseDTO> tourBookings = tourBookingService.getPaymentsByDateRange(startDate, endDate);
-        return ResponseEntity.ok(tourBookings);
-    }
-
-    @GetMapping("/revenue/total")
-    public ResponseEntity<BigDecimal> getTotalRevenue() {
-        BigDecimal totalRevenue = tourBookingService.getTotalRevenue();
-        return ResponseEntity.ok(totalRevenue);
-    }
-
-    @GetMapping("/count/payment-status/{paymentStatus}")
-    public ResponseEntity<Long> countBookingsByPaymentStatus(@PathVariable TourBooking.PaymentStatus paymentStatus) {
-        long count = tourBookingService.countBookingsByPaymentStatus(paymentStatus);
-        return ResponseEntity.ok(count);
-    }
-
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<TourBookingResponseDTO> updateTourBookingStatus(
-            @PathVariable Long id,
-            @RequestParam TourBooking.TourBookingStatus status) {
-        TourBookingResponseDTO updatedTourBooking = tourBookingService.updateTourBookingStatus(id, status);
-        return ResponseEntity.ok(updatedTourBooking);
-    }
-
-    @PatchMapping("/{id}/cancel")
-    public ResponseEntity<String> cancelTourBooking(@PathVariable Long id) {
-        boolean response = tourBookingService.cancelTourBooking(id);
-        if (response) {
-            return ResponseEntity.ok("Tour booking cancelled successfully");
+    public ResponseEntity<?> createBooking(@Valid @RequestBody CreateTourBookingDTO dto) {
+        try {
+            TourBookingResponseDTO response = bookingService.createBooking(dto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Validation Error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body(createErrorResponse("Booking Conflict", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", "An unexpected error occurred: " + e.getMessage()));
         }
-        return ResponseEntity.noContent().build();
     }
 
-    @PatchMapping("/{id}/refund")
-    public ResponseEntity<TourBookingResponseDTO> refundPayment(
-            @PathVariable Long id,
-            @RequestParam String refundReason) {
-        TourBookingResponseDTO refundedBooking = tourBookingService.refundPayment(id, refundReason);
-        return ResponseEntity.ok(refundedBooking);
+    /**
+     * Get booking by ID (Public - customer needs to check their booking)
+     */
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<?> getBookingById(@PathVariable Long bookingId) {
+        try {
+            TourBookingResponseDTO response = bookingService.getBookingById(bookingId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        }
     }
 
-    // Stripe webhook endpoints
-    @PostMapping("/webhook/payment-success")
-    public ResponseEntity<TourBookingResponseDTO> handlePaymentSuccess(
-            @RequestParam String sessionId,
-            @RequestParam String paymentIntentId) {
-        TourBookingResponseDTO updatedBooking = stripeService.handlePaymentSuccess(sessionId, paymentIntentId);
-        return ResponseEntity.ok(updatedBooking);
+    /**
+     * Get all bookings by customer email (Public - customer can see their bookings)
+     */
+    @GetMapping("/customer/{email}")
+    public ResponseEntity<?> getBookingsByCustomerEmail(@PathVariable String email) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getBookingsByCustomerEmail(email);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
     }
 
-    @PostMapping("/webhook/payment-failure")
-    public ResponseEntity<TourBookingResponseDTO> handlePaymentFailure(
-            @RequestParam String sessionId,
-            @RequestParam String failureReason) {
-        TourBookingResponseDTO updatedBooking = stripeService.handlePaymentFailure(sessionId, failureReason);
-        return ResponseEntity.ok(updatedBooking);
+    /**
+     * Get all bookings by user ID (Public - user can see their bookings)
+     */
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<?> getBookingsByUserId(@PathVariable Long userId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getBookingsByUserId(userId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Cancel a booking (Public - customers can cancel their bookings)
+     */
+    @PutMapping("/{bookingId}/cancel")
+    public ResponseEntity<?> cancelBooking(
+            @PathVariable Long bookingId,
+            @RequestBody(required = false) Map<String, String> requestBody) {
+        try {
+            String cancellationReason = requestBody != null ?
+                    requestBody.getOrDefault("cancellationReason", "Customer cancelled the booking") :
+                    "Customer cancelled the booking";
+            TourBookingResponseDTO response = bookingService.cancelBooking(bookingId, cancellationReason);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Tour Guide approves a booking (Tour Guide only)
+     */
+    @PutMapping("/{bookingId}/approve")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> approveBooking(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, Long> requestBody) {
+        try {
+            Long tourGuideId = requestBody.get("tourGuideId");
+            if (tourGuideId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Validation Error", "Tour guide ID is required"));
+            }
+
+            TourBookingResponseDTO response = bookingService.approveBooking(bookingId, tourGuideId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Tour Guide rejects a booking (Tour Guide only)
+     */
+    @PutMapping("/{bookingId}/reject")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> rejectBooking(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, Object> requestBody) {
+        try {
+            Long tourGuideId = requestBody.get("tourGuideId") != null ?
+                    Long.valueOf(requestBody.get("tourGuideId").toString()) : null;
+            String rejectionReason = (String) requestBody.get("rejectionReason");
+
+            if (tourGuideId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Validation Error", "Tour guide ID is required"));
+            }
+
+            TourBookingResponseDTO response = bookingService.rejectBooking(bookingId, tourGuideId, rejectionReason);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Tour Guide marks booking as completed (Tour Guide only)
+     */
+    @PutMapping("/{bookingId}/complete")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> completeBooking(
+            @PathVariable Long bookingId,
+            @RequestBody Map<String, Long> requestBody) {
+        try {
+            Long tourGuideId = requestBody.get("tourGuideId");
+            if (tourGuideId == null) {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(createErrorResponse("Validation Error", "Tour guide ID is required"));
+            }
+
+            TourBookingResponseDTO response = bookingService.completeBooking(bookingId, tourGuideId);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(createErrorResponse("Not Found", e.getMessage()));
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(createErrorResponse("Invalid Operation", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all bookings for a specific tour (Tour Guide only)
+     */
+    @GetMapping("/tour/{tourId}")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> getBookingsByTour(@PathVariable Long tourId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getBookingsByTour(tourId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get all bookings for a tour guide (Tour Guide only)
+     */
+    @GetMapping("/guide/{tourGuideId}")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> getBookingsByTourGuide(@PathVariable Long tourGuideId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getBookingsByTourGuide(tourGuideId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get pending approval bookings for a tour guide (Tour Guide only)
+     */
+    @GetMapping("/guide/{tourGuideId}/pending")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> getPendingApprovalBookings(@PathVariable Long tourGuideId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getPendingApprovalBookings(tourGuideId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get approved bookings for a tour guide (Tour Guide only)
+     */
+    @GetMapping("/guide/{tourGuideId}/approved")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> getApprovedBookings(@PathVariable Long tourGuideId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getApprovedBookings(tourGuideId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get upcoming tours for a tour guide (Tour Guide only)
+     */
+    @GetMapping("/guide/{tourGuideId}/upcoming")
+    @PreAuthorize("hasRole('TOUR_GUIDE')")
+    public ResponseEntity<?> getUpcomingTours(@PathVariable Long tourGuideId) {
+        try {
+            List<TourBookingResponseDTO> bookings = bookingService.getUpcomingTours(tourGuideId);
+            return ResponseEntity.ok(bookings);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Get available capacity for a tour on a specific date (Public)
+     */
+    @GetMapping("/tour/{tourId}/capacity")
+    public ResponseEntity<?> getAvailableCapacity(
+            @PathVariable Long tourId,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate tourDate) {
+        try {
+            int availableCapacity = bookingService.getAvailableCapacity(tourId, tourDate);
+            Map<String, Object> response = new HashMap<>();
+            response.put("tourId", tourId);
+            response.put("tourDate", tourDate);
+            response.put("availableCapacity", availableCapacity);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(createErrorResponse("Server Error", e.getMessage()));
+        }
+    }
+
+    /**
+     * Helper method to create error response
+     */
+    private Map<String, String> createErrorResponse(String error, String message) {
+        Map<String, String> errorResponse = new HashMap<>();
+        errorResponse.put("error", error);
+        errorResponse.put("message", message);
+        return errorResponse;
     }
 }

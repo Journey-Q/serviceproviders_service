@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\PaymentAnalyticsDTO.java\")",
-      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\RevenueReportDTO.java\")"
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\RevenueReportDTO.java\")",
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\ServiceProvider\\TourGuide\\TourBookingResponseDTO.java\")",
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\ServiceProvider\\TravelAgency\\VehicleBookingPaymentResponseDTO.java\")",
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\BookingHistoryResponseDTO.java\")",
+      "Bash(rm \"C:\\Users\\ASUS\\Desktop\\serviceproviders_service\\src\\main\\java\\com\\example\\serviceproviders_service\\dto\\StripeResponse.java\")"
     ],
     "deny": [],
     "ask": []

@@ -43,11 +43,6 @@ public class SecurityConfig {
                         .requestMatchers("/service/auth/signup", "/service/auth/login", "/service/auth/test").permitAll()
                         .requestMatchers("/admin/auth/login", "/admin/auth/test", "/admin/auth/setup").permitAll()
 
-                        // Public endpoints - Room Booking (for customers/guests)
-                        .requestMatchers(HttpMethod.POST, "/service/roombookings/create-with-payment").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/reference/").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/session/").permitAll()
-
                         // Public endpoints - Rooms (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/rooms/{id}").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/rooms/all").permitAll()
@@ -59,26 +54,17 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/rooms/*/status").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.DELETE, "/service/rooms/*").hasRole("HOTEL")
 
-                        // Webhook endpoints - Public (Stripe callbacks)
-                        .requestMatchers("/service/roombookings/webhook/").permitAll()
+                        // Public endpoints - Room Bookings (customers can book and check bookings)
+                        .requestMatchers(HttpMethod.POST, "/service/room-bookings/create").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/room-bookings/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/room-bookings/customer/*").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/service/room-bookings/*/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/room-bookings/check-availability").permitAll()
 
-                        // Authenticated user endpoints - Customers can view their own bookings
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/user/").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/guest/").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/cancel").authenticated()
-
-                        // Hotel/Service Provider endpoints - Manage bookings
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/all").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/service-provider/").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/payments/").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/revenue/").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/count/").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/status").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.PATCH, "/service/roombookings/*/refund").hasRole("HOTEL")
-                        .requestMatchers(HttpMethod.POST, "/service/roombookings/create").hasRole("HOTEL")
-
-                        // Get booking by ID - Authenticated (with service-level authorization)
-                        .requestMatchers(HttpMethod.GET, "/service/roombookings/*").authenticated()
+                        // Hotel role endpoints - Room Booking management
+                        .requestMatchers(HttpMethod.GET, "/service/room-bookings/room/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/room-bookings/provider/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.PUT, "/service/room-bookings/*/status").hasRole("HOTEL")
 
                         // Public endpoints - Tours (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/tours/*").permitAll()
@@ -90,6 +76,20 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/service/tours/*").hasRole("TOUR_GUIDE")
                         .requestMatchers(HttpMethod.PATCH, "/service/tours/*/status").hasRole("TOUR_GUIDE")
                         .requestMatchers(HttpMethod.DELETE, "/service/tours/*").hasRole("TOUR_GUIDE")
+
+                        // Public endpoints - Tour Bookings (customers can book and check bookings)
+                        .requestMatchers(HttpMethod.POST, "/service/tour-bookings/create").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-bookings/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-bookings/customer/*").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/service/tour-bookings/*/cancel").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/tour-bookings/tour/*/capacity").permitAll()
+
+                        // Tour Guide role endpoints - Tour Booking management (approval workflow)
+                        .requestMatchers(HttpMethod.GET, "/service/tour-bookings/tour/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/service/tour-bookings/guide/*").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PUT, "/service/tour-bookings/*/approve").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PUT, "/service/tour-bookings/*/reject").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.PUT, "/service/tour-bookings/*/complete").hasRole("TOUR_GUIDE")
 
                         // Public endpoints - Drivers (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/drivers/*").permitAll()
@@ -167,65 +167,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PATCH, "/service/reviews/*/status").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
                         .requestMatchers(HttpMethod.PATCH, "/service/reviews/*/verification").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT", "ADMIN")
 
-
-                        // Public endpoints - Tour Booking (for customers/guests)
-                        .requestMatchers(HttpMethod.POST, "/service/tourbookings/create-with-payment").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/reference/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/session/*").permitAll()
-
-                        // Webhook endpoints - Public (Stripe callbacks for tour bookings)
-                        .requestMatchers("/service/tourbookings/webhook/*").permitAll()
-
-                        // Authenticated user endpoints - Customers can view their own tour bookings
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/user/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/customer/*").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/cancel").authenticated()
-
-                        // Tour Guide/Service Provider endpoints - Manage tour bookings
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/all").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/service-provider/*").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/payments/*").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/revenue/*").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/count/*").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/status").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.PATCH, "/service/tourbookings/*/refund").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.POST, "/service/tourbookings/create").hasRole("TOUR_GUIDE")
-
-                        // Get tour booking by ID - Authenticated (with service-level authorization)
-                        .requestMatchers(HttpMethod.GET, "/service/tourbookings/*").authenticated()
-
-                        // Public endpoints - Vehicle Booking (for customers/guests)
-                        .requestMatchers(HttpMethod.POST, "/service/vehiclebookings/create-with-payment").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/reference/*").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/session/*").permitAll()
-
-                        // Webhook endpoints - Public (Stripe callbacks for vehicle bookings)
-                        .requestMatchers("/service/vehiclebookings/webhook/*").permitAll()
-
-                        // Authenticated user endpoints - Customers can view their own vehicle bookings
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/user/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/customer/*").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/cancel").authenticated()
-
-                        // Travel Agent/Service Provider endpoints - Manage vehicle bookings
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/all").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/service-provider/*").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/payments/*").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/revenue/*").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/count/*").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/status").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.PATCH, "/service/vehiclebookings/*/refund").hasRole("TRAVEL_AGENT")
-                        .requestMatchers(HttpMethod.POST, "/service/vehiclebookings/create").hasRole("TRAVEL_AGENT")
-
-                        // Get vehicle booking by ID - Authenticated (with service-level authorization)
-                        .requestMatchers(HttpMethod.GET, "/service/vehiclebookings/*").authenticated()
-
-                        // Unified Booking History endpoints - Authenticated users can view their own booking history
-                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/hotels").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/tours").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/vehicles").authenticated()
-                        .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/count").authenticated()
 
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
