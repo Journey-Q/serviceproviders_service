@@ -106,7 +106,8 @@ public class SecurityConfig {
                         // Public endpoints - Vehicles (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/**dd ." +
+                                "").permitAll()
 
                         // Travel Agent role endpoints - Vehicle management
                         .requestMatchers(HttpMethod.POST, "/service/vehicles/create").hasRole("TRAVEL_AGENT")
@@ -204,6 +205,24 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/tours").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/vehicles").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/booking-history/*").permitAll()
+
+                        // Public endpoints - Unified Service Provider Access (for browsing all providers)
+                        .requestMatchers(HttpMethod.GET, "/service/providers/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/approved").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/hotels").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/tour-guides").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/agencies").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/by-type/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/*").permitAll()
+
+                        // Public endpoints - Unified Service Provider Profiles Only (profile details only, no resources/revenue)
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/all").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/approved").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/hotels").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/tour-guides").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/agencies").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/by-type/*").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/providers/profiles/*").permitAll()
 
                         // Service Provider endpoints
                         .requestMatchers("/service/auth/profile").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
