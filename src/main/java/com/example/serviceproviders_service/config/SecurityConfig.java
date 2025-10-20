@@ -162,9 +162,24 @@ public class SecurityConfig {
                         // Public endpoints - Promotions (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/promotions/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/promotions/service-provider/").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/promotions/service-provider/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/status/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/promotions/active").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/promotions/advertised").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/promotions/approved-pending-payment").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/promotions/*/payment-details").permitAll()
+
+                        // Promotion payment endpoint (public - service providers can pay)
+                        .requestMatchers(HttpMethod.POST, "/service/promotions/pay").permitAll()
+
+                        // Service Provider role endpoints - Promotion management
+                        .requestMatchers(HttpMethod.POST, "/service/promotions/create").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PUT, "/service/promotions/*").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.PATCH, "/service/promotions/*/toggle-active").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.DELETE, "/service/promotions/*").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+
+                        // Admin role endpoints - Promotion approval
+                        .requestMatchers(HttpMethod.PATCH, "/service/promotions/*/status").hasRole("ADMIN")
 
 
                         // Public endpoints - Reviews (for browsing)

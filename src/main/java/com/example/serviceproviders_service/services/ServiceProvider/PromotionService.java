@@ -1,6 +1,8 @@
 package com.example.serviceproviders_service.services.ServiceProvider;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.CreatePromotionDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionPaymentRequest;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionPaymentResponse;
 import com.example.serviceproviders_service.dto.ServiceProvider.PromotionResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
 import com.example.serviceproviders_service.exception.BadRequestException;
@@ -10,8 +12,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -221,6 +228,207 @@ public class PromotionService {
 
         promotionRepository.delete(promotion);
         return true;
+    }
+
+    // ==================== PAYMENT METHODS ====================
+
+    /**
+     * Process payment for promotion advertisement
+     */
+    @Transactional
+    public PromotionPaymentResponse processPromotionPayment(PromotionPaymentRequest paymentRequest) {
+        // Validate payment request
+        validatePaymentRequest(paymentRequest);
+
+        // Get promotion
+        Promotion promotion = promotionRepository.findById(paymentRequest.getPromotionId())
+                .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + paymentRequest.getPromotionId()));
+
+        // Check if promotion is approved by admin
+        if (promotion.getStatus() != Promotion.PromotionStatus.APPROVED) {
+            throw new BadRequestException("Promotion must be approved by admin before payment. Current status: " + promotion.getStatus());
+        }
+
+        // Check if already paid
+        if (promotion.getIsPaid()) {
+            throw new BadRequestException("Promotion has already been paid for");
+        }
+
+        // Get plan details
+        Map<String, Object> planDetails = getPlanDetails(paymentRequest.getPlan());
+
+        // Simulate payment processing (validate card details)
+        boolean paymentSuccess = processPayment(paymentRequest);
+
+        if (!paymentSuccess) {
+            return PromotionPaymentResponse.builder()
+                    .promotionId(promotion.getId())
+                    .status("FAILED")
+                    .message("Payment processing failed. Please check your card details and try again.")
+                    .build();
+        }
+
+        // Generate transaction reference
+        String transactionId = "TXN" + System.currentTimeMillis();
+        String paymentReference = "PAY-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+
+        // Extract last 4 digits of card
+        String cardLastFour = paymentRequest.getCardNumber().replaceAll("\\s", "");
+        cardLastFour = cardLastFour.substring(cardLastFour.length() - 4);
+
+        // Calculate total amount with GST
+        BigDecimal baseAmount = (BigDecimal) planDetails.get("price");
+        BigDecimal gstAmount = baseAmount.multiply(new BigDecimal("0.18"));
+        BigDecimal totalAmount = baseAmount.add(gstAmount);
+
+        // Update promotion with payment details
+        promotion.setIsPaid(true);
+        promotion.setPaymentAmount(totalAmount);
+        promotion.setPaymentPlan(paymentRequest.getPlan());
+        promotion.setAdvertisementDuration((String) planDetails.get("duration"));
+        promotion.setTransactionId(transactionId);
+        promotion.setPaymentReferenceNumber(paymentReference);
+        promotion.setPaymentDate(LocalDateTime.now());
+        promotion.setCardLastFourDigits(cardLastFour);
+        promotion.setCardholderName(paymentRequest.getCardholderName());
+        promotion.setStatus(Promotion.PromotionStatus.ADVERTISED); // Change status to ADVERTISED
+
+        Promotion updatedPromotion = promotionRepository.save(promotion);
+
+        // Return success response
+        return PromotionPaymentResponse.builder()
+                .promotionId(updatedPromotion.getId())
+                .transactionId(transactionId)
+                .paymentReferenceNumber(paymentReference)
+                .amount(totalAmount)
+                .plan(paymentRequest.getPlan())
+                .duration((String) planDetails.get("duration"))
+                .paymentDate(updatedPromotion.getPaymentDate())
+                .cardLastFourDigits(cardLastFour)
+                .cardholderName(paymentRequest.getCardholderName())
+                .status("SUCCESS")
+                .message("Payment successful! Your promotion is now being advertised.")
+                .build();
+    }
+
+    /**
+     * Get pricing plan details
+     */
+    private Map<String, Object> getPlanDetails(String plan) {
+        Map<String, Object> planMap = new HashMap<>();
+
+        switch (plan.toLowerCase()) {
+            case "basic":
+                planMap.put("name", "Basic Plan");
+                planMap.put("price", new BigDecimal("1999"));
+                planMap.put("duration", "7 days");
+                break;
+            case "premium":
+                planMap.put("name", "Premium Plan");
+                planMap.put("price", new BigDecimal("4999"));
+                planMap.put("duration", "30 days");
+                break;
+            case "featured":
+                planMap.put("name", "Featured Plan");
+                planMap.put("price", new BigDecimal("9999"));
+                planMap.put("duration", "60 days");
+                break;
+            default:
+                throw new BadRequestException("Invalid plan selected. Available plans: basic, premium, featured");
+        }
+
+        return planMap;
+    }
+
+    /**
+     * Simulate payment processing (In real scenario, integrate with payment gateway)
+     */
+    private boolean processPayment(PromotionPaymentRequest paymentRequest) {
+        // Basic validation (in real scenario, this would call payment gateway API)
+
+        // Validate card number (simple Luhn algorithm check)
+        String cardNumber = paymentRequest.getCardNumber().replaceAll("\\s", "");
+        if (cardNumber.length() < 13 || cardNumber.length() > 19) {
+            throw new BadRequestException("Invalid card number");
+        }
+
+        // Validate expiry date
+        if (paymentRequest.getExpiryDate() == null || !paymentRequest.getExpiryDate().matches("\\d{2}/\\d{2}")) {
+            throw new BadRequestException("Invalid expiry date format. Use MM/YY");
+        }
+
+        // Validate CVV
+        if (paymentRequest.getCvv() == null || !paymentRequest.getCvv().matches("\\d{3,4}")) {
+            throw new BadRequestException("Invalid CVV");
+        }
+
+        // Simulate successful payment (always returns true for now)
+        // In production, integrate with actual payment gateway
+        return true;
+    }
+
+    /**
+     * Validate payment request
+     */
+    private void validatePaymentRequest(PromotionPaymentRequest request) {
+        if (request == null) {
+            throw new BadRequestException("Payment request cannot be null");
+        }
+        if (request.getPromotionId() == null || request.getPromotionId() <= 0) {
+            throw new BadRequestException("Valid promotion ID is required");
+        }
+        if (request.getPlan() == null || request.getPlan().trim().isEmpty()) {
+            throw new BadRequestException("Payment plan is required");
+        }
+        if (request.getCardNumber() == null || request.getCardNumber().trim().isEmpty()) {
+            throw new BadRequestException("Card number is required");
+        }
+        if (request.getExpiryDate() == null || request.getExpiryDate().trim().isEmpty()) {
+            throw new BadRequestException("Card expiry date is required");
+        }
+        if (request.getCvv() == null || request.getCvv().trim().isEmpty()) {
+            throw new BadRequestException("CVV is required");
+        }
+        if (request.getCardholderName() == null || request.getCardholderName().trim().isEmpty()) {
+            throw new BadRequestException("Cardholder name is required");
+        }
+        if (request.getBillingAddress() == null || request.getBillingAddress().trim().isEmpty()) {
+            throw new BadRequestException("Billing address is required");
+        }
+        if (request.getCity() == null || request.getCity().trim().isEmpty()) {
+            throw new BadRequestException("City is required");
+        }
+        if (request.getZipCode() == null || request.getZipCode().trim().isEmpty()) {
+            throw new BadRequestException("ZIP code is required");
+        }
+    }
+
+    /**
+     * Get payment details for a promotion
+     */
+    @Transactional(readOnly = true)
+    public Map<String, Object> getPromotionPaymentDetails(Long promotionId) {
+        if (promotionId == null || promotionId <= 0) {
+            throw new BadRequestException("Invalid promotion ID");
+        }
+
+        Promotion promotion = promotionRepository.findById(promotionId)
+                .orElseThrow(() -> new BadRequestException("Promotion not found with id: " + promotionId));
+
+        Map<String, Object> paymentDetails = new HashMap<>();
+        paymentDetails.put("promotionId", promotion.getId());
+        paymentDetails.put("isPaid", promotion.getIsPaid());
+        paymentDetails.put("paymentAmount", promotion.getPaymentAmount());
+        paymentDetails.put("paymentPlan", promotion.getPaymentPlan());
+        paymentDetails.put("advertisementDuration", promotion.getAdvertisementDuration());
+        paymentDetails.put("transactionId", promotion.getTransactionId());
+        paymentDetails.put("paymentReferenceNumber", promotion.getPaymentReferenceNumber());
+        paymentDetails.put("paymentDate", promotion.getPaymentDate());
+        paymentDetails.put("cardLastFourDigits", promotion.getCardLastFourDigits());
+        paymentDetails.put("cardholderName", promotion.getCardholderName());
+        paymentDetails.put("status", promotion.getStatus());
+
+        return paymentDetails;
     }
 
     private void validateCreatePromotionDTO(CreatePromotionDTO dto) {
