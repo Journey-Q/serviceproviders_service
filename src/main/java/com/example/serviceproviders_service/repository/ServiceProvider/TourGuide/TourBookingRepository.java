@@ -24,6 +24,18 @@ public interface TourBookingRepository extends JpaRepository<TourBooking, Long> 
     // Find all bookings for a specific user
     List<TourBooking> findByUserId(Long userId);
 
+    // Find approved and completed bookings for a specific user (for booking history)
+    @Query("SELECT b FROM TourBooking b WHERE b.userId = :userId " +
+           "AND b.status IN ('APPROVED', 'COMPLETED') " +
+           "ORDER BY b.createdAt DESC")
+    List<TourBooking> findApprovedBookingsByUserId(@Param("userId") Long userId);
+
+    // Find approved and completed bookings for a service provider (for booking history)
+    @Query("SELECT b FROM TourBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status IN ('APPROVED', 'COMPLETED') " +
+           "ORDER BY b.createdAt DESC")
+    List<TourBooking> findApprovedBookingsByServiceProviderId(@Param("serviceProviderId") Long serviceProviderId);
+
     // Find bookings by status
     List<TourBooking> findByStatus(TourBooking.BookingStatus status);
 

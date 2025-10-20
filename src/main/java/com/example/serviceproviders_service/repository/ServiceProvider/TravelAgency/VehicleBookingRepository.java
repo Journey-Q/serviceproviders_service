@@ -24,6 +24,18 @@ public interface VehicleBookingRepository extends JpaRepository<VehicleBooking, 
     // Find all bookings for a specific user
     List<VehicleBooking> findByUserId(Long userId);
 
+    // Find approved and completed bookings for a specific user (for booking history)
+    @Query("SELECT b FROM VehicleBooking b WHERE b.userId = :userId " +
+           "AND b.status IN ('APPROVED', 'COMPLETED') " +
+           "ORDER BY b.createdAt DESC")
+    List<VehicleBooking> findApprovedBookingsByUserId(@Param("userId") Long userId);
+
+    // Find approved and completed bookings for a service provider (for booking history)
+    @Query("SELECT b FROM VehicleBooking b WHERE b.serviceProviderId = :serviceProviderId " +
+           "AND b.status IN ('APPROVED', 'COMPLETED') " +
+           "ORDER BY b.createdAt DESC")
+    List<VehicleBooking> findApprovedBookingsByServiceProviderId(@Param("serviceProviderId") Long serviceProviderId);
+
     // Find bookings by status
     List<VehicleBooking> findByStatus(VehicleBooking.BookingStatus status);
 

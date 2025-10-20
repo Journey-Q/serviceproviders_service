@@ -67,4 +67,44 @@ public class BookingHistoryController {
         BookingHistoryResponseDTO booking = bookingHistoryService.getBookingById(bookingId, type);
         return ResponseEntity.ok(booking);
     }
+
+    /**
+     * Get all bookings (rooms, tours, vehicles) for a specific service provider
+     * GET /api/booking-history/service-provider/{serviceProviderId}
+     */
+    @GetMapping("/service-provider/{serviceProviderId}")
+    public ResponseEntity<List<BookingHistoryResponseDTO>> getAllBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
+        List<BookingHistoryResponseDTO> bookings = bookingHistoryService.getAllBookingsByServiceProviderId(serviceProviderId);
+        return ResponseEntity.ok(bookings);
+    }
+
+    /**
+     * Get all room bookings for a specific service provider
+     * GET /api/booking-history/service-provider/{serviceProviderId}/rooms
+     */
+    @GetMapping("/service-provider/{serviceProviderId}/rooms")
+    public ResponseEntity<List<BookingHistoryResponseDTO>> getRoomBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
+        List<BookingHistoryResponseDTO> bookings = bookingHistoryService.getRoomBookingsByServiceProviderId(serviceProviderId);
+        return ResponseEntity.ok(bookings);
+    }
+
+    /**
+     * Get all tour bookings for a specific service provider
+     * GET /api/booking-history/service-provider/{serviceProviderId}/tours
+     */
+    @GetMapping("/service-provider/{serviceProviderId}/tours")
+    public ResponseEntity<List<BookingHistoryResponseDTO>> getTourBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
+        List<BookingHistoryResponseDTO> bookings = bookingHistoryService.getTourBookingsByServiceProviderId(serviceProviderId);
+        return ResponseEntity.ok(bookings);
+    }
+
+    /**
+     * Get all vehicle bookings for a specific service provider
+     * GET /api/booking-history/service-provider/{serviceProviderId}/vehicles
+     */
+    @GetMapping("/service-provider/{serviceProviderId}/vehicles")
+    public ResponseEntity<List<BookingHistoryResponseDTO>> getVehicleBookingsByServiceProviderId(@PathVariable Long serviceProviderId) {
+        List<BookingHistoryResponseDTO> bookings = bookingHistoryService.getVehicleBookingsByServiceProviderId(serviceProviderId);
+        return ResponseEntity.ok(bookings);
+    }
 }

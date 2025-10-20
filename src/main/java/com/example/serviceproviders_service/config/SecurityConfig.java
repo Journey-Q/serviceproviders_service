@@ -221,6 +221,12 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/booking-history/user/*/vehicles").permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/booking-history/*").permitAll()
 
+                        // Service Provider endpoints - Booking History (service providers can view their bookings)
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/service-provider/*").hasAnyRole("HOTEL", "TOUR_GUIDE", "TRAVEL_AGENT")
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/service-provider/*/rooms").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/service-provider/*/tours").hasRole("TOUR_GUIDE")
+                        .requestMatchers(HttpMethod.GET, "/api/booking-history/service-provider/*/vehicles").hasRole("TRAVEL_AGENT")
+
                         // Public endpoints - Unified Service Provider Access (for browsing all providers)
                         .requestMatchers(HttpMethod.GET, "/service/providers/all").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/providers/approved").permitAll()
