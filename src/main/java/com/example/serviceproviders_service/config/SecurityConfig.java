@@ -49,7 +49,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/service/rooms/service-provider/").permitAll()
 
                         // Hotel role endpoints - Room management
-                        .requestMatchers(HttpMethod.POST, "/service/rooms/create").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.POST, "/service/rooms/**").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.PUT, "/service/rooms/*").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.PATCH, "/service/rooms/*/status").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.DELETE, "/service/rooms/*").hasRole("HOTEL")
