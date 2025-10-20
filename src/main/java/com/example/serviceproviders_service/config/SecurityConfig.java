@@ -106,10 +106,10 @@ public class SecurityConfig {
                         // Public endpoints - Vehicles (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/vehicles/all").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/**dd ." +
-                                "").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/service/vehicles/service-provider/**").permitAll()
 
-                        // Travel Agent role endpoints - Vehicle management
+                        // Travel Agent role endpoints.
+                        // - Vehicle management
                         .requestMatchers(HttpMethod.POST, "/service/vehicles/create").hasRole("TRAVEL_AGENT")
                         .requestMatchers(HttpMethod.PUT, "/service/vehicles/*").hasRole("TRAVEL_AGENT")
                         .requestMatchers(HttpMethod.PATCH, "/service/vehicles/*/status").hasRole("TRAVEL_AGENT")
