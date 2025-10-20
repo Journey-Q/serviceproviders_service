@@ -53,14 +53,14 @@ public class BookingHistoryService {
                 .map(this::convertRoomBookingToDTO)
                 .collect(Collectors.toList()));
 
-        // Fetch tour bookings
-        List<TourBooking> tourBookings = tourBookingRepository.findByUserId(userId);
+        // Fetch tour bookings (only approved and completed)
+        List<TourBooking> tourBookings = tourBookingRepository.findApprovedBookingsByUserId(userId);
         allBookings.addAll(tourBookings.stream()
                 .map(this::convertTourBookingToDTO)
                 .collect(Collectors.toList()));
 
-        // Fetch vehicle bookings
-        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findByUserId(userId);
+        // Fetch vehicle bookings (only approved and completed)
+        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findApprovedBookingsByUserId(userId);
         allBookings.addAll(vehicleBookings.stream()
                 .map(this::convertVehicleBookingToDTO)
                 .collect(Collectors.toList()));
@@ -83,10 +83,10 @@ public class BookingHistoryService {
     }
 
     /**
-     * Get all tour bookings for a user
+     * Get all tour bookings for a user (only approved and completed)
      */
     public List<BookingHistoryResponseDTO> getTourBookingsByUserId(Long userId) {
-        List<TourBooking> tourBookings = tourBookingRepository.findByUserId(userId);
+        List<TourBooking> tourBookings = tourBookingRepository.findApprovedBookingsByUserId(userId);
         return tourBookings.stream()
                 .map(this::convertTourBookingToDTO)
                 .sorted(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed())
@@ -94,10 +94,73 @@ public class BookingHistoryService {
     }
 
     /**
-     * Get all vehicle bookings for a user
+     * Get all vehicle bookings for a user (only approved and completed)
      */
     public List<BookingHistoryResponseDTO> getVehicleBookingsByUserId(Long userId) {
-        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findByUserId(userId);
+        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findApprovedBookingsByUserId(userId);
+        return vehicleBookings.stream()
+                .map(this::convertVehicleBookingToDTO)
+                .sorted(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all bookings for a specific service provider across all booking types
+     */
+    public List<BookingHistoryResponseDTO> getAllBookingsByServiceProviderId(Long serviceProviderId) {
+        List<BookingHistoryResponseDTO> allBookings = new ArrayList<>();
+
+        // Fetch room bookings
+        List<RoomBooking> roomBookings = roomBookingRepository.findByServiceProviderId(serviceProviderId);
+        allBookings.addAll(roomBookings.stream()
+                .map(this::convertRoomBookingToDTO)
+                .collect(Collectors.toList()));
+
+        // Fetch tour bookings (only approved and completed)
+        List<TourBooking> tourBookings = tourBookingRepository.findApprovedBookingsByServiceProviderId(serviceProviderId);
+        allBookings.addAll(tourBookings.stream()
+                .map(this::convertTourBookingToDTO)
+                .collect(Collectors.toList()));
+
+        // Fetch vehicle bookings (only approved and completed)
+        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findApprovedBookingsByServiceProviderId(serviceProviderId);
+        allBookings.addAll(vehicleBookings.stream()
+                .map(this::convertVehicleBookingToDTO)
+                .collect(Collectors.toList()));
+
+        // Sort by creation date (newest first)
+        allBookings.sort(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed());
+
+        return allBookings;
+    }
+
+    /**
+     * Get all room bookings for a service provider
+     */
+    public List<BookingHistoryResponseDTO> getRoomBookingsByServiceProviderId(Long serviceProviderId) {
+        List<RoomBooking> roomBookings = roomBookingRepository.findByServiceProviderId(serviceProviderId);
+        return roomBookings.stream()
+                .map(this::convertRoomBookingToDTO)
+                .sorted(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all tour bookings for a service provider (only approved and completed)
+     */
+    public List<BookingHistoryResponseDTO> getTourBookingsByServiceProviderId(Long serviceProviderId) {
+        List<TourBooking> tourBookings = tourBookingRepository.findApprovedBookingsByServiceProviderId(serviceProviderId);
+        return tourBookings.stream()
+                .map(this::convertTourBookingToDTO)
+                .sorted(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed())
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Get all vehicle bookings for a service provider (only approved and completed)
+     */
+    public List<BookingHistoryResponseDTO> getVehicleBookingsByServiceProviderId(Long serviceProviderId) {
+        List<VehicleBooking> vehicleBookings = vehicleBookingRepository.findApprovedBookingsByServiceProviderId(serviceProviderId);
         return vehicleBookings.stream()
                 .map(this::convertVehicleBookingToDTO)
                 .sorted(Comparator.comparing(BookingHistoryResponseDTO::getCreatedAt).reversed())
