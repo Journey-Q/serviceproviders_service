@@ -83,7 +83,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/service/tours/create").hasRole("TOUR_GUIDE")
                         .requestMatchers(HttpMethod.PUT, "/service/tours/*").hasRole("TOUR_GUIDE")
                         .requestMatchers(HttpMethod.PATCH, "/service/tours/*/status").hasRole("TOUR_GUIDE")
-                        .requestMatchers(HttpMethod.DELETE, "/service/tours/*").hasRole("TOUR_GUIDE")
+
+                        .requestMatchers(HttpMethod.GET, "/service/tours/**").permitAll()
+
 
                         // Public endpoints - Tour Bookings (customers can book and check bookings)
                         .requestMatchers(HttpMethod.POST, "/service/tour-bookings/create").permitAll()
