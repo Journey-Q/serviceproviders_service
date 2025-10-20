@@ -1,6 +1,8 @@
 package com.example.serviceproviders_service.controller.ServiceProvider;
 
 import com.example.serviceproviders_service.dto.ServiceProvider.CreatePromotionDTO;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionPaymentRequest;
+import com.example.serviceproviders_service.dto.ServiceProvider.PromotionPaymentResponse;
 import com.example.serviceproviders_service.dto.ServiceProvider.PromotionResponseDTO;
 import com.example.serviceproviders_service.entity.serviceProvider.Promotion;
 import com.example.serviceproviders_service.services.ServiceProvider.PromotionService;
@@ -9,6 +11,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/service/promotions")
@@ -94,5 +97,47 @@ public class PromotionController {
             return ResponseEntity.ok("Promotion deleted successfully");
         }
         return ResponseEntity.noContent().build();
+    }
+
+    // ==================== PAYMENT ENDPOINTS ====================
+
+    /**
+     * Process payment for promotion advertisement
+     * Endpoint: POST /service/promotions/pay
+     */
+    @PostMapping("/pay")
+    public ResponseEntity<PromotionPaymentResponse> processPromotionPayment(@RequestBody PromotionPaymentRequest paymentRequest) {
+        PromotionPaymentResponse response = promotionService.processPromotionPayment(paymentRequest);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * Get payment details for a promotion
+     * Endpoint: GET /service/promotions/{id}/payment-details
+     */
+    @GetMapping("/{id}/payment-details")
+    public ResponseEntity<Map<String, Object>> getPromotionPaymentDetails(@PathVariable Long id) {
+        Map<String, Object> paymentDetails = promotionService.getPromotionPaymentDetails(id);
+        return ResponseEntity.ok(paymentDetails);
+    }
+
+    /**
+     * Get all paid/advertised promotions (for admin to see all currently running ads)
+     * Endpoint: GET /service/promotions/advertised
+     */
+    @GetMapping("/advertised")
+    public ResponseEntity<List<PromotionResponseDTO>> getAdvertisedPromotions() {
+        List<PromotionResponseDTO> promotions = promotionService.getPromotionsByStatus(Promotion.PromotionStatus.ADVERTISED);
+        return ResponseEntity.ok(promotions);
+    }
+
+    /**
+     * Get all approved promotions waiting for payment
+     * Endpoint: GET /service/promotions/approved-pending-payment
+     */
+    @GetMapping("/approved-pending-payment")
+    public ResponseEntity<List<PromotionResponseDTO>> getApprovedPendingPayment() {
+        List<PromotionResponseDTO> promotions = promotionService.getPromotionsByStatus(Promotion.PromotionStatus.APPROVED);
+        return ResponseEntity.ok(promotions);
     }
 }
