@@ -6,7 +6,7 @@ import com.example.serviceproviders_service.entity.serviceProvider.Hotel.Room;
 import com.example.serviceproviders_service.entity.serviceProvider.Hotel.RoomBooking;
 import com.example.serviceproviders_service.repository.ServiceProvider.Hotel.RoomBookingRepository;
 import com.example.serviceproviders_service.repository.ServiceProvider.Hotel.RoomRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,13 +19,12 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class RoomBookingService {
 
-    @Autowired
-    private RoomBookingRepository bookingRepository;
-
-    @Autowired
-    private RoomRepository roomRepository;
+    private final RoomBookingRepository bookingRepository;
+    private final RoomRepository roomRepository;
+    private final PaymentHistoryService paymentHistoryService;
 
     /**
      * Create a new room booking with comprehensive validations
@@ -102,7 +101,15 @@ public class RoomBookingService {
         // Step 9: Save booking
         RoomBooking savedBooking = bookingRepository.save(booking);
 
-        // Step 10: Return response DTO
+        // Step 10: Create payment history record automatically
+        try {
+            paymentHistoryService.createPaymentHistoryFromBooking(savedBooking);
+        } catch (Exception e) {
+            // Log the error but don't fail the booking creation
+            System.err.println("Warning: Failed to create payment history: " + e.getMessage());
+        }
+
+        // Step 11: Return response DTO
         return new RoomBookingResponseDTO(savedBooking);
     }
 

@@ -66,6 +66,14 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/service/room-bookings/provider/*").hasRole("HOTEL")
                         .requestMatchers(HttpMethod.PUT, "/service/room-bookings/*/status").hasRole("HOTEL")
 
+                        // Hotel role endpoints - Payment History (hotels can view payment history)
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/provider/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/provider/*/filter").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/payment/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/room/*").hasRole("HOTEL")
+                        .requestMatchers(HttpMethod.GET, "/service/payment-history/guest/*").hasRole("HOTEL")
+
                         // Public endpoints - Tours (for browsing)
                         .requestMatchers(HttpMethod.GET, "/service/tours/*").permitAll()
                         .requestMatchers(HttpMethod.GET, "/service/tours/all").permitAll()
